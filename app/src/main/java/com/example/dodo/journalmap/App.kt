@@ -11,6 +11,7 @@ class App : Application() {
     }
 
     lateinit var boxStore: BoxStore
+        private set
 
     override fun onCreate() {
         super.onCreate()

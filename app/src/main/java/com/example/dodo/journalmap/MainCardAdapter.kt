@@ -1,6 +1,7 @@
 package com.example.dodo.journalmap
 
 import android.content.Intent
+import android.net.Uri
 import android.support.v7.widget.CardView
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import java.io.File
 
 class MainCardAdapter(val mainCardList: ArrayList<MainCard>) :
         RecyclerView.Adapter<MainCardAdapter.ViewHolder>() {
@@ -20,22 +22,23 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val itemView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.activity_main_card_view, parent, false) as CardView
-        itemView.setOnClickListener(object: View.OnClickListener{
-            override fun onClick(v: View?) {
-                val journalIntent = Intent(v?.context, JournalActivity::class.java)
-                journalIntent.putExtra("latitude", 40.7282924)
-                journalIntent.putExtra("longitude", -74.0003308)
-                journalIntent.putExtra("name", "New York")
-                v?.context?.startActivity(journalIntent)
-            }
-        })
         return ViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.imageView.setImageResource(mainCardList[position].mImageId)
-        holder.textTitleView.setText(mainCardList[position].mTextTitle)
-        holder.textDateView.setText(mainCardList[position].mTextDate)
+        holder.imageView.setImageURI(Uri.fromFile(File(mainCardList[position].mImageUri)))
+        holder.textTitleView.setText(mainCardList[position].mTitle)
+        holder.textDateView.setText(mainCardList[position].mDate)
+
+        holder.imageView.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View?) {
+                val journalIntent = Intent(v?.context, JournalActivity::class.java)
+                journalIntent.putExtra("latitude", mainCardList[position].mLat)
+                journalIntent.putExtra("longitude", mainCardList[position].mLng)
+                journalIntent.putExtra("name", mainCardList[position].mName)
+                v?.context?.startActivity(journalIntent)
+            }
+        })
     }
 
     override fun getItemCount(): Int {

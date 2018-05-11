@@ -1,6 +1,5 @@
 package com.example.dodo.journalmap
 
-import android.location.Location
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 
@@ -10,5 +9,7 @@ data class Journal(
         var title: String = "",
         var date: String = "",
         var lat: Double = 0.0,
-        var lng: Double = 0.0
+        var lng: Double = 0.0,
+        var imageUri: String = "",
+        var name: String = ""
 )

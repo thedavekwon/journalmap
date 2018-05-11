@@ -1,13 +1,24 @@
 package com.example.dodo.journalmap
 
-class MainCard {
-    var mImageId: Int = 0
-    var mTextTitle: String = ""
-    var mTextDate: String = ""
+import android.graphics.Bitmap
+import android.net.Uri
 
-    constructor(imageId: Int, textTitle: String, textDate: String) {
-        mImageId = imageId
-        mTextTitle = textTitle
-        mTextDate = textDate
+class MainCard {
+    var mImageUri: String
+    var mName: String
+    var mTitle: String
+    var mDate: String
+    var mId: Long
+    var mLat: Double
+    var mLng: Double
+
+    constructor(id: Long, name: String, imageUri: String, title: String, date: String, lat: Double, lng: Double) {
+        mId = id
+        mName = name
+        mImageUri = imageUri
+        mTitle = title
+        mDate = date
+        mLat = lat
+        mLng = lng
     }
 }

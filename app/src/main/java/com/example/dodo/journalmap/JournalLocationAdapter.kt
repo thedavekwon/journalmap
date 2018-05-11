@@ -24,7 +24,7 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
 
         imageView.setImageResource(currentLocation.mImageId)
         textView.setText(currentLocation.mName)
-        view.setOnClickListener(object : View.OnClickListener{
+        view.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
                 val intent = Intent()
             }
