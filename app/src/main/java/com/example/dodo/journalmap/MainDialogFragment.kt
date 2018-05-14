@@ -3,11 +3,7 @@ package com.example.dodo.journalmap
 import android.Manifest
 import android.app.AlertDialog
 import android.graphics.Bitmap
-import android.location.Location
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.support.annotation.RequiresPermission
 import android.support.v4.app.DialogFragment
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,7 +14,6 @@ import android.widget.EditText
 import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.Response
-import com.android.volley.TimeoutError
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,10 +24,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
-import io.objectbox.query.Query
 import permissions.dispatcher.*
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 

@@ -16,6 +16,7 @@ import android.widget.Toast
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
+import java.io.File
 
 class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
 
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
             override fun onClick(v: View?) {
                 val journals = journalQeury.find()
                 journals.forEach {
+                    val deleted = File(it.imageUri).delete()
                     journalBox.remove(it.id)
                 }
                 updateJournal()

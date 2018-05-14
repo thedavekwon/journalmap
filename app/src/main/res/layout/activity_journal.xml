@@ -21,20 +21,22 @@
 
         <ListView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/activity_journal_list_view"
+            android:layout_height="wrap_content"
+            android:id="@+id/activity_journal_list_view_itself"
             android:layout_margin="4dp"
-            android:padding="4dp"/>
+            android:padding="4dp" />
 
         <TextView android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="No Results" />
+            android:text="No Results"
+            style = "@android:style/TextAppearance.Widget.TextView"/>
 
         <android.support.design.widget.FloatingActionButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
+            android:id="@+id/activity_journal_fab"
             android:layout_margin="10dp" />
 
     </FrameLayout>
