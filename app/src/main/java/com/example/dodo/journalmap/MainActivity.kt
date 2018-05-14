@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
             val journals = journalQeury.find()
             journals.forEach {
                 // Delete From File
-                val deleted = File(it.imageUri).delete()
+                File(it.mImageUri).delete()
                 // Delete From DB
                 journalBox.remove(it.id)
             }
@@ -107,18 +107,18 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
         //var tmp = ""
         //journals.forEach { tmp += "$it " }
         //Log.v("journals", tmp)
-            if (mainCardList.size != 0) {
-                mainCardList.clear()
-            }
+        if (mainCardList.size != 0) {
+            mainCardList.clear()
+        }
         journals.forEach {
             mainCardList.add(MainCard(
                     id = it.id,
-                    imageUri = it.imageUri,
-                    name = it.name,
-                    title = it.title,
-                    date = it.date,
-                    lat = it.lat,
-                    lng = it.lng))
+                    imageUri = it.mImageUri,
+                    name = it.mName,
+                    title = it.mTitle,
+                    date = it.mDate,
+                    lat = it.mLat,
+                    lng = it.mLng))
         }
         viewAdapter.notifyDataSetChanged()
     }

@@ -36,6 +36,7 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>) :
                 journalIntent.putExtra("latitude", mainCardList[position].mLat)
                 journalIntent.putExtra("longitude", mainCardList[position].mLng)
                 journalIntent.putExtra("name", mainCardList[position].mName)
+                journalIntent.putExtra("id", mainCardList[position].mId)
                 v?.context?.startActivity(journalIntent)
             }
         })

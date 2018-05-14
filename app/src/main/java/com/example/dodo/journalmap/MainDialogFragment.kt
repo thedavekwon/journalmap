@@ -85,12 +85,12 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
     fun saveJournal(it: Bitmap) {
         try {
             imageUri = FileUtils.storeImage(context, it)
-            val journal = Journal(
-                    imageUri = imageUri,
-                    title = title,
-                    date = SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time),
-                    lat = lat,
-                    lng = lng)
+            val journal = Journal()
+            journal.mImageUri = imageUri
+            journal.mTitle = title
+            journal.mDate = SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time)
+            journal.mLat = lat
+            journal.mLng = lng
             journalBox.put(journal)
             //Update Card
             (activity as updateCards).updateCards()

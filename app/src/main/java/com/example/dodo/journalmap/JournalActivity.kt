@@ -24,6 +24,7 @@ import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.log
 
 
 @RuntimePermissions
@@ -33,34 +34,63 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var lat = 0.0
     private var lng = 0.0
+    private var name = ""
+    private var mId: Long = 0
 
     private lateinit var mMap: GoogleMap
     private lateinit var mAdapter: JournalLocationAdapter
 
-    private lateinit var journalLocationQuery: Query<JournalLocation>
+    private lateinit var journalQuery: Query<Journal>
+    private lateinit var journalBox: Box<Journal>
     private lateinit var journalLocationBox: Box<JournalLocation>
+
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
         super.onCreate(savedInstanceState)
+
+        lat = intent.getDoubleExtra("latitude", 0.0)
+        lng = intent.getDoubleExtra("longitude", 0.0)
+        name = intent.getStringExtra("name")
+        mId = intent.getLongExtra("id", 0)
+
         setContentView(R.layout.activity_journal)
         val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         // Set up for DB
+        journalBox = (application as App).boxStore.boxFor<Journal>()
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()
-        journalLocationQuery = journalLocationBox.query().build()
-        updateJournalLocation()
+        journalQuery = journalBox.query().build()
+
+        /*
+        Log.v("id", "id $mId")
+        val q = journalQuery.find()
+        q.forEach {
+            Log.v("id", "id is ${it.id}")
+        }
+        */
 
         // Set up for List View
         activity_journal_list_view_itself.emptyView = findViewById(android.R.id.empty)
         mAdapter = JournalLocationAdapter(this@JournalActivity, R.layout.activity_journal_list_view, journalLocationList)
         activity_journal_list_view_itself.adapter = mAdapter
+        updateJournalLocation()
+
+        // Set up for FAB
         activity_journal_fab.setOnClickListener {
             photoPickerWithPermissionCheck()
         }
 
+        // Set up for View Model
+        /*
+        val model: JournalLocationViewModel = ViewModelProviders.of(this).get(JournalLocationViewModel::class.java)
+        model.getJournalLocationLiveData(journalLocationBox).observe(this, android.arch.lifecycle.Observer<List<JournalLocation>> {
+            journalLocationList = ArrayList(it)
+            mAdapter.notifyDataSetChanged()
+        })
+        */
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -77,9 +107,16 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
                             mImageUri = it.toString(),
                             mName = "",
                             mText = "")
-                    journalLocationBox.put(journalLocation)
-                    journalLocationList.add(journalLocation)
+                    val journalLocations = journalBox.get(mId)
+                    journalLocations.mJournalLocations?.add(journalLocation)
+                    journalBox.put(journalLocations)
+                    Log.v("journalbox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    //Log.v("journalbox", "journalbox ${journalBox.get(mId).mJournalLocations?.get(0)}")
                 }
+                journalBox.get(mId).mJournalLocations?.forEach {
+                    journalLocationList.add(it)
+                }
+                Log.v("", "journallocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
                 mAdapter.notifyDataSetChanged()
             } catch (e : Exception) {
                 e.printStackTrace()
@@ -96,9 +133,6 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         val mapIntent = intent
-        lat = mapIntent.getDoubleExtra("latitude", 0.0)
-        lng = mapIntent.getDoubleExtra("longitude", 0.0)
-        val name = mapIntent.getStringExtra("name")
         Log.v("lat, lng", "$lat   $lng")
         val curLoc = LatLng(lat, lng)
         mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
@@ -138,15 +172,14 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun updateJournalLocation() {
-        val journalLocations = journalLocationQuery.find()
+        val journalLocations = journalBox.get(mId).mJournalLocations
 
         if (!journalLocationList.isEmpty()) {
             journalLocationList.clear()
         }
 
-        journalLocations.forEach {
+        journalLocations?.forEach {
             journalLocationList.add(JournalLocation(
-                    id = it.id,
                     mText = it.mText,
                     mName = it.mName,
                     mImageUri = it.mImageUri,
@@ -154,5 +187,19 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
                     mLng = it.mLng
             ))
         }
+        mAdapter.notifyDataSetChanged()
     }
+/*
+    class JournalLocationViewModel : ViewModel() {
+
+        private lateinit var journalLocationLiveData: ObjectBoxLiveData<JournalLocation>
+
+        fun getJournalLocationLiveData(journalLocationBox: Box<JournalLocation>?) : ObjectBoxLiveData<JournalLocation> {
+            if (journalLocationLiveData == null) {
+                journalLocationLiveData = ObjectBoxLiveData<JournalLocation>(journalLocationBox?.query()?.build())
+            }
+            return journalLocationLiveData
+        }
+    }
+*/
 }
