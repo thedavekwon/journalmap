@@ -9,5 +9,6 @@ data class JournalLocation(
         var mLng: Double = 0.0,
         var mLat: Double = 0.0,
         var mImageUri: String = "",
-        var mName: String = ""
+        var mName: String = "",
+        var mText: String = ""
 )
