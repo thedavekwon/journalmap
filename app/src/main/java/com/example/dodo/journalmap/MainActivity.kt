@@ -29,8 +29,6 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
     private lateinit var journalBox: Box<Journal>
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -40,7 +38,6 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
         // Set up Db
         journalBox = (application as App).boxStore.boxFor<Journal>()
         journalQeury = journalBox.query().build()
-        updateJournal()
 
         // Set up Recycler View
         viewManager = LinearLayoutManager(this)
@@ -50,36 +47,37 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
             layoutManager = viewManager
             adapter = viewAdapter
         }
+        updateJournal()
         // Set up Floating Button
         val fab = findViewById<FloatingActionButton>(R.id.activity_main_floating_action_button)
-        fab.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                try {
-                    val mainDialogFragment = MainDialogFragment()
-                    val fragmentManager = supportFragmentManager
-                    mainDialogFragment.show(fragmentManager, "dialog")
-                    viewAdapter.notifyDataSetChanged()
-                } catch (e: Exception) {
-                    Toast.makeText(this@MainActivity, "wait", Toast.LENGTH_LONG).show()
-                }
+        fab.setOnClickListener {
+            try {
+                val mainDialogFragment = MainDialogFragment()
+                val fragmentManager = supportFragmentManager
+                mainDialogFragment.show(fragmentManager, "dialog")
+                updateJournal()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "wait", Toast.LENGTH_LONG).show()
             }
-        })
+        }
 
         val fab_delete = findViewById<FloatingActionButton>(R.id.activity_main_floating_action_button_delete)
-        fab_delete.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                val journals = journalQeury.find()
-                journals.forEach {
-                    val deleted = File(it.imageUri).delete()
-                    journalBox.remove(it.id)
-                }
-                updateJournal()
-                viewAdapter.notifyDataSetChanged()
-                //TODO(delete files too)
+        fab_delete.setOnClickListener{
+            val journals = journalQeury.find()
+            journals.forEach {
+                // Delete From File
+                val deleted = File(it.imageUri).delete()
+                // Delete From DB
+                journalBox.remove(it.id)
             }
-        })
+            updateJournal()
+        }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        viewAdapter.notifyDataSetChanged()
+    }
     //Add Action Buttons(activity_main_menu)
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater: MenuInflater = menuInflater
@@ -109,9 +107,9 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
         //var tmp = ""
         //journals.forEach { tmp += "$it " }
         //Log.v("journals", tmp)
-        if (mainCardList.size != 0) {
-            mainCardList.clear()
-        }
+            if (mainCardList.size != 0) {
+                mainCardList.clear()
+            }
         journals.forEach {
             mainCardList.add(MainCard(
                     id = it.id,
@@ -122,5 +120,6 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
                     lat = it.lat,
                     lng = it.lng))
         }
+        viewAdapter.notifyDataSetChanged()
     }
 }
