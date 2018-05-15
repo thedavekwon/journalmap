@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.Handler
 import android.support.v4.app.DialogFragment
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,11 +12,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.dodo.journalmap.Journal_.*
+import com.example.dodo.journalmap.R.layout.fragment_main_dialog
+import com.github.ybq.android.spinkit.style.DoubleBounce
+import com.github.ybq.android.spinkit.style.Wave
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -36,6 +42,8 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var journalBox: Box<Journal>
+    private lateinit var mProgressBar: ProgressBar
+
     private var name = ""
     private var lat = 0.0
     private var lng = 0.0
@@ -51,35 +59,65 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         val queue = Volley.newRequestQueue(activity?.applicationContext)
         val titleText = rootView.findViewById<EditText>(R.id.fragment_main_dialog_city_title)
         val saveBtn = rootView.findViewById<Button>(R.id.fragment_main_dialog_city_save)
+        var mProgressStatus = 0
+        val mHandler = Handler()
+        mProgressBar = rootView.findViewById(R.id.fragment_main_dialog_search_progress_bar)
+        //val waveBounce: Wave = Wave()
+
+        //mProgressBar.indeterminateDrawable = waveBounce
+        mProgressBar.visibility = ProgressBar.INVISIBLE
+
+
         // Set up DB
         journalBox = (activity?.application as App).boxStore.boxFor<Journal>()
 
         mapFragment.getMapAsync(this)
 
-        searchBtn.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                Log.v("name", nameText.text.toString())
-                try {
-                    queue.add(getLocationFromGoogle(nameText.text.toString()))
-                } catch (e: Exception) {
-                    Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
-                }
-            }
-        })
+        searchBtn.setOnClickListener {
 
-        saveBtn.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                // Snapshot the map
-                val callback = GoogleMap.SnapshotReadyCallback {
-                    title = titleText.text.toString()
-                    //Log.v("title", title)
-                    saveJournal(it)
-                }
-                mMap.snapshot(callback)
+            Log.v("name", nameText.text.toString())
+            try {
+
+//                    Thread(Runnable {
+//                        override fun run() {
+//                            while (mProgressStatus < 100) {
+//                                mProgressStatus++
+//                                android.os.SystemClock.sleep(50)
+//                                mHandler.post(Runnable() {
+//                                    override fun run() {
+//                                        mProgressBar.setProgress(mProgressStatus)
+//                                    }
+//                                })
+//                            }
+//                        }
+//                        mHandler.post(Runnable() {
+//                            override fun run() {
+//                                mProgressBar.setVisibility(View.VISIBLE);
+//
+//
+//                            }
+//                        })
+
+                queue.add(getLocationFromGoogle(nameText.text.toString()))
+            } catch (e: Exception) {
+                Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+
             }
-        })
+        }
+
+
+        saveBtn.setOnClickListener {
+            // Snapshot the map
+            val callback = GoogleMap.SnapshotReadyCallback {
+                title = titleText.text.toString()
+                saveJournal(it)
+            }
+            mMap.snapshot(callback)
+        }
         return rootView
+
     }
+
 
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun saveJournal(it: Bitmap) {
@@ -118,11 +156,14 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
     }
 
     fun getLocationFromGoogle(loc: String): JsonObjectRequest {
+
         val preprocessedName = loc.replace(" ", "%20")
         val url = googleMapApiUrl + preprocessedName
         val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
                 Response.Listener { response ->
+
                     try {
+                        mProgressBar.visibility = ProgressBar.VISIBLE
                         val jsonArray = response.getJSONArray("results")
                         var jsonObject = jsonArray.getJSONObject(0)
                         name = jsonObject.getJSONArray("address_components")
@@ -133,15 +174,24 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         lat = jsonObject.getDouble("lat")
                         lng = jsonObject.getDouble("lng")
                         val curLoc = LatLng(lat, lng)
+                        Thread.sleep(500)
                         mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 9.0f))
                         Log.v("map", "$lat, $lng")
+
+
                     } catch (e: Exception) {
                         Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+
+
+                    } finally {
+                        mProgressBar.visibility = ProgressBar.GONE
                     }
                 },
                 Response.ErrorListener {
                     Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+                    mProgressBar.visibility = ProgressBar.GONE
+
                 }
         )
         return jsonObjectRequest
@@ -169,4 +219,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
     interface updateCards {
         fun updateCards()
     }
+
+
 }
+
