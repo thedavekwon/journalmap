@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_journal.*
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
+import com.google.android.gms.maps.model.Marker
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
 import com.zhihu.matisse.engine.impl.PicassoEngine
@@ -24,7 +25,6 @@ import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.log
 
 
 @RuntimePermissions
@@ -45,6 +45,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var journalLocationBox: Box<JournalLocation>
 
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
+    private var mMarkers: ArrayList<Marker> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
@@ -100,23 +101,29 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
                 Matisse.obtainResult(data).forEach {
                     // Temp Location Name Title for now
                     var random = Random().nextFloat()
-                    random = (random + 2.0f) / 3
+                    random = (random + 10000.0f) / 10000
                     //
-                    val journalLocation = JournalLocation(mLng = lat * random,
+                    val journalLocation = JournalLocation(mLng = lng * random,
                             mLat = lat * random,
                             mImageUri = it.toString(),
                             mName = "",
                             mText = "")
                     val journalLocations = journalBox.get(mId)
                     journalLocations.mJournalLocations?.add(journalLocation)
+
+                    //TODO()
+                    val marker = mMap.addMarker(MarkerOptions()
+                                    .position(LatLng(journalLocation.mLat,journalLocation.mLng))
+                                    .title("Marker in ${journalLocation.mName}"))
+                    mMarkers.add(marker)
                     journalBox.put(journalLocations)
-                    Log.v("journalbox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    //Log.v("journalbox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     //Log.v("journalbox", "journalbox ${journalBox.get(mId).mJournalLocations?.get(0)}")
                 }
                 journalBox.get(mId).mJournalLocations?.forEach {
                     journalLocationList.add(it)
                 }
-                Log.v("", "journallocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
+                //Log.v("", "journallocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
                 mAdapter.notifyDataSetChanged()
             } catch (e : Exception) {
                 e.printStackTrace()
@@ -124,18 +131,15 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
+                                            grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         onRequestPermissionsResult(requestCode, grantResults)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-
-        val mapIntent = intent
-        Log.v("lat, lng", "$lat   $lng")
         val curLoc = LatLng(lat, lng)
-        mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(curLoc))
     }
 
@@ -188,6 +192,10 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
             ))
         }
         mAdapter.notifyDataSetChanged()
+    }
+
+    fun moveMapCamera(latLng: LatLng) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 /*
     class JournalLocationViewModel : ViewModel() {
