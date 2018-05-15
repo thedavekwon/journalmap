@@ -16,6 +16,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_journal.*
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
+import android.widget.Button
 import com.google.android.gms.maps.model.Marker
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
@@ -84,6 +85,11 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
             photoPickerWithPermissionCheck()
         }
 
+        // Set up for default Home Button
+        activity_journal_home_button.setOnClickListener {
+            moveToDefaultLocation()
+        }
+
         // Set up for View Model
         /*
         val model: JournalLocationViewModel = ViewModelProviders.of(this).get(JournalLocationViewModel::class.java)
@@ -93,6 +99,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         })
         */
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -197,6 +204,11 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     fun moveMapCamera(latLng: LatLng) {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
+
+    fun moveToDefaultLocation(){
+        moveMapCamera(LatLng(lat, lng))
+    }
+
 /*
     class JournalLocationViewModel : ViewModel() {
 

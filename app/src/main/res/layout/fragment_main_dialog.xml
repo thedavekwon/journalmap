@@ -58,6 +58,8 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent" />
 
+
+
         <ProgressBar
             android:id="@+id/fragment_main_dialog_search_progress_bar"
             style="?android:attr/progressBarStyle"
