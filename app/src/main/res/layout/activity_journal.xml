@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -15,9 +15,18 @@
         map:cameraZoom="14"
         tools:context=".MapsActivity" />
 
+    <Button
+        android:id="@+id/activity_journal_home_button"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:text="H"
+        app:layout_constraintRight_toRightOf="@+id/activity_journal_map"
+        app:layout_constraintBottom_toBottomOf="@+id/activity_journal_map"/>
+
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/activity_journal_map">
 
         <ListView
             android:layout_width="match_parent"
@@ -42,4 +51,4 @@
     </FrameLayout>
 
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>
