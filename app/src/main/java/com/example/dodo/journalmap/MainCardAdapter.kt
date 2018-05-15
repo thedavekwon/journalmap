@@ -1,48 +1,178 @@
 package com.example.dodo.journalmap
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.support.v7.widget.CardView
 import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import java.io.File
+import android.util.Log
+import android.view.*
+import java.util.*
+import android.view.MotionEvent
 
-class MainCardAdapter(val mainCardList: ArrayList<MainCard>) :
-        RecyclerView.Adapter<MainCardAdapter.ViewHolder>() {
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var imageView: ImageView = itemView.findViewById(R.id.activity_main_card_view_image)
-        var textTitleView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_title)
-        var textDateView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_date)
-    }
+interface ItemTouchHelperAdapter {
+    fun onItemMove(fromPosition: Int, toPosition: Int): Boolean
+    fun onItemDismiss(position: Int)
+}
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+interface ItemTouchHelperViewHolder {
+    fun onItemSelected()
+    fun onItemClear()
+}
+
+interface OnStartDragListener {
+    fun onStartDrag(viewHolder: RecyclerView.ViewHolder)
+}
+
+val TAG = "GestureListener"
+
+class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListener: OnStartDragListener) :
+        RecyclerView.Adapter<MainCardAdapter.ItemViewHolder>(), ItemTouchHelperAdapter {
+        class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemTouchHelperViewHolder {
+            var imageView: ImageView = itemView.findViewById(R.id.activity_main_card_view_image)
+            var textTitleView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_title)
+            var textDateView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_date)
+            override fun onItemSelected() {
+                itemView.setBackgroundColor(Color.LTGRAY)
+            }
+
+            override fun onItemClear() {
+                itemView.setBackgroundColor(0)
+            }
+        }
+
+    private lateinit var gestureDetector: GestureDetector
+    private lateinit var context: Context
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val itemView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.activity_main_card_view, parent, false) as CardView
-        return ViewHolder(itemView)
+        context = parent.context
+        return ItemViewHolder(itemView)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         holder.imageView.setImageURI(Uri.fromFile(File(mainCardList[position].mImageUri)))
-        holder.textTitleView.setText(mainCardList[position].mTitle)
-        holder.textDateView.setText(mainCardList[position].mDate)
+        holder.textTitleView.text = mainCardList[position].mTitle
+        holder.textDateView.text = mainCardList[position].mDate
 
-        holder.imageView.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                val journalIntent = Intent(v?.context, JournalActivity::class.java)
+        //TODO( it does not work because of custom adapter)
+        gestureDetector = GestureDetector(holder.imageView.context, object: GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapUp(e: MotionEvent?): Boolean {
+                Log.i(TAG, "Single Tap Up $e")
+                val journalIntent = Intent(holder.imageView.context, JournalActivity::class.java)
                 journalIntent.putExtra("latitude", mainCardList[position].mLat)
                 journalIntent.putExtra("longitude", mainCardList[position].mLng)
                 journalIntent.putExtra("name", mainCardList[position].mName)
                 journalIntent.putExtra("id", mainCardList[position].mId)
-                v?.context?.startActivity(journalIntent)
+                holder.imageView.context?.startActivity(journalIntent)
+                return false
+            }
+
+            override fun onLongPress(e: MotionEvent) {
+                // Touch has been long enough to indicate a long press.
+                // Does not indicate motion is complete yet (no up event necessarily)
+                Log.i(TAG, "Long Press $e")
+            }
+
+            override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float,
+                                  distanceY: Float): Boolean {
+                // User attempted to scroll
+                Log.i(TAG, "Scroll $e1")
+                return false
+            }
+
+            override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float,
+                                 velocityY: Float): Boolean {
+                // Fling event occurred.  Notification of this one happens after an "up" event.
+                Log.i(TAG, "Fling $e1")
+                return false
+            }
+
+            override fun onShowPress(e: MotionEvent) {
+                // User performed a down event, and hasn't moved yet.
+                Log.i(TAG, "Show Press $e")
+            }
+
+            override fun onDown(e: MotionEvent): Boolean {
+                // "Down" event - User touched the screen.
+                Log.i(TAG, "Down $e")
+                return false
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                // User tapped the screen twice.
+                Log.i(TAG, "Double tap $e")
+                return false
+            }
+
+            override fun onDoubleTapEvent(e: MotionEvent): Boolean {
+                // Since double-tap is actually several events which are considered one aggregate
+                // gesture, there's a separate callback for an individual event within the doubletap
+                // occurring.  This occurs for down, up, and move.
+                Log.i(TAG, "Event within double tap $e")
+                return false
+            }
+
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                // A confirmed single-tap event has occurred.  Only called when the detector has
+                // determined that the first tap stands alone, and is not part of a double tap.
+                Log.i(TAG, "Single tap confirmed $e")
+                return false
             }
         })
+
+
+        holder.imageView.setOnClickListener{
+            val journalIntent = Intent(it.context, JournalActivity::class.java)
+            journalIntent.putExtra("latitude", mainCardList[position].mLat)
+            journalIntent.putExtra("longitude", mainCardList[position].mLng)
+            journalIntent.putExtra("name", mainCardList[position].mName)
+            journalIntent.putExtra("id", mainCardList[position].mId)
+            it.context?.startActivity(journalIntent)
+        }
+        /*
+        holder.imageView.setOnTouchListener(object : View.OnTouchListener{
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                if (gestureDetector.onTouchEvent(event)) {
+                    return true
+                } else if(event?.action == MotionEvent.ACTION_DOWN) {
+                    Log.v("Action Down", "Action Down $event")
+                    dragStartListener.onStartDrag(holder)
+                }
+                return false
+            }
+        })
+        */
     }
 
     override fun getItemCount(): Int {
         return mainCardList.size
+    }
+
+    override fun onItemDismiss(position: Int) {
+        val size = mainCardList.size
+        (context as MainActivity).deleteJournal(mainCardList[position])
+        mainCardList.removeAt(position)
+        notifyItemRangeRemoved(0, size)
+    }
+
+    override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
+        //Collections.swap(mainCardList, fromPosition, toPosition)
+        if (fromPosition < toPosition) {
+            for (i in fromPosition until toPosition) {
+                Collections.swap(mainCardList, i, i + 1)
+            }
+        } else {
+            for (i in fromPosition downTo toPosition + 1) {
+                Collections.swap(mainCardList, i, i - 1)
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition)
+        return true
     }
 }
