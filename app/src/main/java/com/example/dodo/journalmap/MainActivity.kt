@@ -6,23 +6,28 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.View
+import android.view.MotionEvent
 import android.widget.Toast
+import com.github.nisrulz.sensey.Sensey
+
+import kotlinx.android.synthetic.main.activity_main.*
 
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.io.File
 
-class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
+class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStartDragListener {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
+    private lateinit var mItemTouchHelper: ItemTouchHelper
 
     private var mainCardList = ArrayList<MainCard>()
     private lateinit var journalQeury: Query<Journal>
@@ -41,16 +46,21 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
 
         // Set up Recycler View
         viewManager = LinearLayoutManager(this)
-        viewAdapter = MainCardAdapter(mainCardList)
+        viewAdapter = MainCardAdapter(mainCardList, this)
         recyclerView = findViewById<RecyclerView>(R.id.activity_main_recycler_view).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
             adapter = viewAdapter
         }
+        // Set up Drag and Drop
+        val callback = SimpleItemTouchHelperCallback(viewAdapter as MainCardAdapter)
+        mItemTouchHelper = ItemTouchHelper(callback)
+        mItemTouchHelper.attachToRecyclerView(recyclerView)
         updateJournal()
-        // Set up Floating Button
-        val fab = findViewById<FloatingActionButton>(R.id.activity_main_floating_action_button)
-        fab.setOnClickListener {
+
+
+        // Set up Floating Button for Add
+        activity_main_floating_action_button.setOnClickListener {
             try {
                 val mainDialogFragment = MainDialogFragment()
                 val fragmentManager = supportFragmentManager
@@ -61,8 +71,8 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
             }
         }
 
-        val fab_delete = findViewById<FloatingActionButton>(R.id.activity_main_floating_action_button_delete)
-        fab_delete.setOnClickListener{
+        // Set up Floating Button for Delete
+        activity_main_floating_action_button_delete.setOnClickListener{
             val journals = journalQeury.find()
             journals.forEach {
                 // Delete From File
@@ -78,14 +88,15 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
         super.onActivityResult(requestCode, resultCode, data)
         viewAdapter.notifyDataSetChanged()
     }
-    //Add Action Buttons(activity_main_menu)
+
+    // Add Action Buttons(activity_main_menu)
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.activity_main_menu, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
-    //Control Action Buttons
+    // Control Action Buttons
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.activity_main_menu_action_settings -> {
             val settingsIntent = Intent(this, SettingsActivity::class.java)
@@ -97,8 +108,17 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards {
         }
     }
 
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        Sensey.getInstance().setupDispatchTouchEvent(ev)
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun updateCards() {
         updateJournal()
+    }
+
+    override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
+        mItemTouchHelper.startDrag(viewHolder)
     }
 
     private fun updateJournal() {

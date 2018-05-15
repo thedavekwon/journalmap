@@ -50,4 +50,5 @@ dependencies {
     implementation "io.objectbox:objectbox-android:$objectboxVersion"
     implementation "io.objectbox:objectbox-kotlin:$objectboxVersion"
     implementation 'com.github.ybq:Android-SpinKit:1.1.0'
+    implementation "com.github.nisrulz:sensey:1.8.0"
 }
