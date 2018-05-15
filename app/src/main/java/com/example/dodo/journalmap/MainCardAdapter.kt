@@ -1,23 +1,18 @@
 package com.example.dodo.journalmap
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.support.v7.widget.CardView
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.helper.ItemTouchHelper
 import android.widget.ImageView
 import android.widget.TextView
 import java.io.File
-import android.support.v4.view.MotionEventCompat
 import android.util.Log
 import android.view.*
 import java.util.*
 import android.view.MotionEvent
-import android.view.GestureDetector.SimpleOnGestureListener
-import com.github.nisrulz.sensey.Sensey
-import com.github.nisrulz.sensey.TouchTypeDetector
-
 
 interface ItemTouchHelperAdapter {
     fun onItemMove(fromPosition: Int, toPosition: Int): Boolean
@@ -51,11 +46,12 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
         }
 
     private lateinit var gestureDetector: GestureDetector
+    private lateinit var context: Context
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val itemView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.activity_main_card_view, parent, false) as CardView
-
+        context = parent.context
         return ItemViewHolder(itemView)
     }
 
@@ -64,6 +60,7 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
         holder.textTitleView.text = mainCardList[position].mTitle
         holder.textDateView.text = mainCardList[position].mDate
 
+        //TODO( it does not work because of custom adapter)
         gestureDetector = GestureDetector(holder.imageView.context, object: GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapUp(e: MotionEvent?): Boolean {
                 Log.i(TAG, "Single Tap Up $e")
@@ -129,6 +126,15 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
             }
         })
 
+
+        holder.imageView.setOnClickListener{
+            val journalIntent = Intent(it.context, JournalActivity::class.java)
+            journalIntent.putExtra("latitude", mainCardList[position].mLat)
+            journalIntent.putExtra("longitude", mainCardList[position].mLng)
+            journalIntent.putExtra("name", mainCardList[position].mName)
+            journalIntent.putExtra("id", mainCardList[position].mId)
+            it.context?.startActivity(journalIntent)
+        }
         /*
         holder.imageView.setOnTouchListener(object : View.OnTouchListener{
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -149,12 +155,23 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
     }
 
     override fun onItemDismiss(position: Int) {
+        val size = mainCardList.size
+        (context as MainActivity).deleteJournal(mainCardList[position])
         mainCardList.removeAt(position)
-        notifyItemChanged(position)
+        notifyItemRangeRemoved(0, size)
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-        Collections.swap(mainCardList, fromPosition, toPosition)
+        //Collections.swap(mainCardList, fromPosition, toPosition)
+        if (fromPosition < toPosition) {
+            for (i in fromPosition until toPosition) {
+                Collections.swap(mainCardList, i, i + 1)
+            }
+        } else {
+            for (i in fromPosition downTo toPosition + 1) {
+                Collections.swap(mainCardList, i, i - 1)
+            }
+        }
         notifyItemMoved(fromPosition, toPosition)
         return true
     }

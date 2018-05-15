@@ -13,7 +13,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.widget.Toast
-import com.github.nisrulz.sensey.Sensey
 
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -75,10 +74,7 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
         activity_main_floating_action_button_delete.setOnClickListener{
             val journals = journalQeury.find()
             journals.forEach {
-                // Delete From File
-                File(it.mImageUri).delete()
-                // Delete From DB
-                journalBox.remove(it.id)
+                deleteJournal(it)
             }
             updateJournal()
         }
@@ -106,11 +102,6 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
         else -> {
             super.onOptionsItemSelected(item)
         }
-    }
-
-    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-        Sensey.getInstance().setupDispatchTouchEvent(ev)
-        return super.dispatchTouchEvent(ev)
     }
 
     override fun updateCards() {
@@ -141,5 +132,15 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
                     lng = it.mLng))
         }
         viewAdapter.notifyDataSetChanged()
+    }
+
+    fun deleteJournal(card: MainCard) {
+        journalBox.remove(card.mId)
+        File(card.mImageUri).delete()
+    }
+
+    fun deleteJournal(journal: Journal) {
+        File(journal.mImageUri).delete()
+        journalBox.remove(journal.id)
     }
 }
