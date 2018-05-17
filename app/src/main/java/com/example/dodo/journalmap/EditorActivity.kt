@@ -38,10 +38,6 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment?
         mapFragment?.getMapAsync(this)
 
-        var mapFragment = supportFragmentManager
-                .findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
         // Set up for DB
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()
         mId = intent.getLongExtra("id", 0)
