@@ -36,6 +36,7 @@ import kotlin.collections.ArrayList
 class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val REQUEST_CODE_CHOOSE = 23
+    private val EDITOR_CODE = 100
 
     private var lat = 0.0
     private var lng = 0.0
@@ -143,6 +144,12 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
                 e.printStackTrace()
             }
         }
+        if(requestCode == EDITOR_CODE){
+            if(resultCode == Activity.RESULT_OK) {
+                updateJournalLocation()
+            }
+        }
+        mAdapter.notifyDataSetChanged()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
@@ -197,13 +204,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         journalLocations?.forEach {
-            journalLocationList.add(JournalLocation(
-                    mText = it.mText,
-                    mName = it.mName,
-                    mImageUri = it.mImageUri,
-                    mLat = it.mLat,
-                    mLng = it.mLng
-            ))
+            journalLocationList.add(it)
         }
         mAdapter.notifyDataSetChanged()
     }
@@ -220,7 +221,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         Log.v("openEditor", "openEditorActivity")
         val editorIntent = Intent(this, EditorActivity::class.java)
         editorIntent.putExtra("id", mId)
-        startActivity(editorIntent)
+        startActivityForResult(editorIntent, EDITOR_CODE)
     }
 
 
