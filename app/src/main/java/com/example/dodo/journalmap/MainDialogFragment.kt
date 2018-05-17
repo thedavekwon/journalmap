@@ -1,6 +1,7 @@
 package com.example.dodo.journalmap
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -119,6 +120,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
     }
 
 
+    @SuppressLint("SimpleDateFormat")
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun saveJournal(it: Bitmap) {
         try {
@@ -129,6 +131,8 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
             journal.mDate = SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time)
             journal.mLat = lat
             journal.mLng = lng
+            journal.mLoc = SimpleDateFormat("yyyyMMddmmss").format(Calendar.getInstance().time)
+            journal.mName = name
             journalBox.put(journal)
             //Update Card
             (activity as updateCards).updateCards()
