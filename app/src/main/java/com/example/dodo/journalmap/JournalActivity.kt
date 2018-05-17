@@ -16,7 +16,11 @@ import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_journal.*
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
+import android.view.MotionEvent
+import android.view.View
 import android.widget.Button
+import com.example.dodo.journalmap.JournalLocation_.journal
+import com.example.dodo.journalmap.R.id.*
 import com.google.android.gms.maps.model.Marker
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
@@ -45,12 +49,14 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var journalBox: Box<Journal>
     private lateinit var journalLocationBox: Box<JournalLocation>
 
+
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
     private var mMarkers: ArrayList<Marker> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
         super.onCreate(savedInstanceState)
+
 
         lat = intent.getDoubleExtra("latitude", 0.0)
         lng = intent.getDoubleExtra("longitude", 0.0)
@@ -89,6 +95,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         activity_journal_home_button.setOnClickListener {
             moveToDefaultLocation()
         }
+
 
         // Set up for View Model
         /*
@@ -208,6 +215,16 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     fun moveToDefaultLocation(){
         moveMapCamera(LatLng(lat, lng))
     }
+
+    fun openEditor() {
+        Log.v("openEditor", "openEditorActivity")
+        val editorIntent = Intent(this, EditorActivity::class.java)
+        editorIntent.putExtra("id", mId)
+        startActivity(editorIntent)
+    }
+
+
+
 
 /*
     class JournalLocationViewModel : ViewModel() {

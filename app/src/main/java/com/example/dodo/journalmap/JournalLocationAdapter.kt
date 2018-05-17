@@ -1,6 +1,8 @@
 package com.example.dodo.journalmap
 
 import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,6 +13,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.gms.maps.model.LatLng
 import com.squareup.picasso.Picasso
+import android.support.v4.content.ContextCompat.startActivity
+import android.view.MotionEvent
+
 
 class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList<JournalLocation>) :
         ArrayAdapter<JournalLocation>(context, resource, objects) {
@@ -24,7 +29,16 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         view?.setOnClickListener {
             (context as JournalActivity).moveMapCamera(LatLng(getItem(position).mLat, getItem(position).mLng))
             Log.v("latlng", "latlng ${getItem(position).mLat}, ${getItem(position).mLng}")
+
         }
+
+        view?.setOnLongClickListener {
+            (context as JournalActivity).openEditor()
+            Log.v("openEditor", "Opened textEditor")
+            true
+        }
+
+
 
         val imageView = view?.findViewById<ImageView>(R.id.activity_journal_list_view_image)
         val textView = view?.findViewById<TextView>(R.id.activity_journal_list_view_name)

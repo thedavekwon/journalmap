@@ -18,7 +18,8 @@ class Journal(
     var mLat: Double = 0.0,
     var mLng: Double = 0.0,
     var mImageUri: String = "",
-    var mName: String = "") {
+    var mName: String = "",
+    var mLoc: String ="") {
 
     @Backlink
     var mJournalLocations: ToMany<JournalLocation>? = null

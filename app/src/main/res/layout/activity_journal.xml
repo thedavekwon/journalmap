@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,26 +27,35 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/activity_journal_map">
+        app:layout_constraintTop_toBottomOf="@id/activity_journal_map"
+        tools:layout_editor_absoluteX="105dp">
 
         <ListView
+            android:id="@+id/activity_journal_list_view_itself"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/activity_journal_list_view_itself"
             android:layout_margin="4dp"
             android:padding="4dp" />
 
-        <TextView android:id="@android:id/empty"
+        <TextView
+            android:id="@android:id/empty"
+            style="@android:style/TextAppearance.Widget.TextView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="No Results"
-            style = "@android:style/TextAppearance.Widget.TextView"/>
+            android:text="No Results" />
+
+        <Button
+            android:id="@+id/test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
 
         <android.support.design.widget.FloatingActionButton
+            android:id="@+id/activity_journal_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:id="@+id/activity_journal_fab"
             android:layout_margin="10dp" />
 
     </FrameLayout>
