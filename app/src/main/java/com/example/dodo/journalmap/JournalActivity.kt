@@ -219,6 +219,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
     fun openEditor() {
         Log.v("openEditor", "openEditorActivity")
         val editorIntent = Intent(this, EditorActivity::class.java)
+        editorIntent.putExtra("id", mId)
         startActivity(editorIntent)
     }
 
