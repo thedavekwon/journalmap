@@ -44,13 +44,6 @@
             android:layout_height="match_parent"
             android:text="No Results" />
 
-        <Button
-            android:id="@+id/test"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            />
-
-
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/activity_journal_fab"
             android:layout_width="wrap_content"
