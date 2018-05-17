@@ -28,8 +28,8 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
     private lateinit var viewManager: RecyclerView.LayoutManager
     private lateinit var mItemTouchHelper: ItemTouchHelper
 
-    private var mainCardList = ArrayList<MainCard>()
-    private lateinit var journalQeury: Query<Journal>
+    private var journalList = ArrayList<Journal>()
+    private lateinit var journalQuery: Query<Journal>
     private lateinit var journalBox: Box<Journal>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,11 +41,11 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
 
         // Set up Db
         journalBox = (application as App).boxStore.boxFor<Journal>()
-        journalQeury = journalBox.query().build()
+        journalQuery = journalBox.query().build()
 
         // Set up Recycler View
         viewManager = LinearLayoutManager(this)
-        viewAdapter = MainCardAdapter(mainCardList, this)
+        viewAdapter = MainCardAdapter(journalList, this)
         recyclerView = findViewById<RecyclerView>(R.id.activity_main_recycler_view).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
 
         // Set up Floating Button for Delete
         activity_main_floating_action_button_delete.setOnClickListener{
-            val journals = journalQeury.find()
+            val journals = journalQuery.find()
             journals.forEach {
                 deleteJournal(it)
             }
@@ -114,29 +114,16 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
 
     private fun updateJournal() {
         Log.v("check", "updateJournal Working")
-        val journals = journalQeury.find()
+        val journals = journalQuery.find()
+        journals.sortBy { it.mLoc }
         //var tmp = ""
         //journals.forEach { tmp += "$it " }
         //Log.v("journals", tmp)
-        if (mainCardList.size != 0) {
-            mainCardList.clear()
+        if (journalList.size != 0) {
+            journalList.clear()
         }
-        journals.forEach {
-            mainCardList.add(MainCard(
-                    id = it.id,
-                    imageUri = it.mImageUri,
-                    name = it.mName,
-                    title = it.mTitle,
-                    date = it.mDate,
-                    lat = it.mLat,
-                    lng = it.mLng))
-        }
+        journalList.addAll(journals)
         viewAdapter.notifyDataSetChanged()
-    }
-
-    fun deleteJournal(card: MainCard) {
-        journalBox.remove(card.mId)
-        File(card.mImageUri).delete()
     }
 
     fun deleteJournal(journal: Journal) {

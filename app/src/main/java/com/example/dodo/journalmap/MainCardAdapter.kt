@@ -13,6 +13,10 @@ import android.util.Log
 import android.view.*
 import java.util.*
 import android.view.MotionEvent
+import io.objectbox.Box
+import io.objectbox.kotlin.boxFor
+import io.objectbox.query.Query
+import java.util.Collections.swap
 
 interface ItemTouchHelperAdapter {
     fun onItemMove(fromPosition: Int, toPosition: Int): Boolean
@@ -30,7 +34,7 @@ interface OnStartDragListener {
 
 val TAG = "GestureListener"
 
-class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListener: OnStartDragListener) :
+class MainCardAdapter(val journalList: ArrayList<Journal>, val dragStartListener: OnStartDragListener) :
         RecyclerView.Adapter<MainCardAdapter.ItemViewHolder>(), ItemTouchHelperAdapter {
         class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemTouchHelperViewHolder {
             var imageView: ImageView = itemView.findViewById(R.id.activity_main_card_view_image)
@@ -48,27 +52,32 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
     private lateinit var gestureDetector: GestureDetector
     private lateinit var context: Context
 
+    private lateinit var journalQuery: Query<Journal>
+    private lateinit var journalBox: Box<Journal>
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val itemView = LayoutInflater.from(parent.context)
                 .inflate(R.layout.activity_main_card_view, parent, false) as CardView
         context = parent.context
+        journalBox = (context.applicationContext as App).boxStore.boxFor<Journal>()
+        journalQuery = journalBox.query().build()
         return ItemViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
-        holder.imageView.setImageURI(Uri.fromFile(File(mainCardList[position].mImageUri)))
-        holder.textTitleView.text = mainCardList[position].mTitle
-        holder.textDateView.text = mainCardList[position].mDate
+        holder.imageView.setImageURI(Uri.fromFile(File(journalList[position].mImageUri)))
+        holder.textTitleView.text = journalList[position].mTitle
+        holder.textDateView.text = journalList[position].mDate
 
         //TODO( it does not work because of custom adapter)
         gestureDetector = GestureDetector(holder.imageView.context, object: GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapUp(e: MotionEvent?): Boolean {
                 Log.i(TAG, "Single Tap Up $e")
                 val journalIntent = Intent(holder.imageView.context, JournalActivity::class.java)
-                journalIntent.putExtra("latitude", mainCardList[position].mLat)
-                journalIntent.putExtra("longitude", mainCardList[position].mLng)
-                journalIntent.putExtra("name", mainCardList[position].mName)
-                journalIntent.putExtra("id", mainCardList[position].mId)
+                journalIntent.putExtra("latitude", journalList[position].mLat)
+                journalIntent.putExtra("longitude", journalList[position].mLng)
+                journalIntent.putExtra("name", journalList[position].mName)
+                journalIntent.putExtra("id", journalList[position].id)
                 holder.imageView.context?.startActivity(journalIntent)
                 return false
             }
@@ -129,10 +138,10 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
 
         holder.imageView.setOnClickListener{
             val journalIntent = Intent(it.context, JournalActivity::class.java)
-            journalIntent.putExtra("latitude", mainCardList[position].mLat)
-            journalIntent.putExtra("longitude", mainCardList[position].mLng)
-            journalIntent.putExtra("name", mainCardList[position].mName)
-            journalIntent.putExtra("id", mainCardList[position].mId)
+            journalIntent.putExtra("latitude", journalList[position].mLat)
+            journalIntent.putExtra("longitude", journalList[position].mLng)
+            journalIntent.putExtra("name", journalList[position].mName)
+            journalIntent.putExtra("id", journalList[position].id)
             it.context?.startActivity(journalIntent)
         }
         /*
@@ -151,28 +160,41 @@ class MainCardAdapter(val mainCardList: ArrayList<MainCard>, val dragStartListen
     }
 
     override fun getItemCount(): Int {
-        return mainCardList.size
+        return journalList.size
     }
 
     override fun onItemDismiss(position: Int) {
-        val size = mainCardList.size
-        (context as MainActivity).deleteJournal(mainCardList[position])
-        mainCardList.removeAt(position)
+        val size = journalList.size
+        (context as MainActivity).deleteJournal(journalList[position])
+        journalList.removeAt(position)
+        Log.v("journalList", "journalList size: ${journalList.size}")
         notifyItemRangeRemoved(0, size)
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
-        //Collections.swap(mainCardList, fromPosition, toPosition)
+        //Collections.swap(journalList, fromPosition, toPosition)
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
-                Collections.swap(mainCardList, i, i + 1)
+                swapLoc(journalList[i], journalList[i+1])
+                //Collections.swap(journalList, i, i + 1)
             }
         } else {
             for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(mainCardList, i, i - 1)
+                swapLoc(journalList[i], journalList[i-1])
+                //Collections.swap(journalList, i, i - 1)
             }
         }
         notifyItemMoved(fromPosition, toPosition)
         return true
+    }
+
+    private fun swapLoc(journal1: Journal, journal2: Journal) {
+        val tmp = journal1.mLoc
+        Log.v("swapLoc", "${journal1.mLoc}, ${journal2.mLoc}")
+        journal1.mLoc = journal2.mLoc
+        journal2.mLoc = tmp
+        Log.v("swapLoc", "${journal1.mLoc}, ${journal2.mLoc}")
+        journalBox.put(journal1)
+        journalBox.put(journal2)
     }
 }
