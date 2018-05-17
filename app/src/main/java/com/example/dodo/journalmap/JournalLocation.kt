@@ -11,6 +11,7 @@ class JournalLocation(
     var mLat: Double = 0.0,
     var mImageUri: String = "",
     var mName: String = "",
-    var mText: String = "") {
+    var mText: String = "",
+    var mDate: String = "") {
     lateinit var journal: ToOne<Journal>
 }

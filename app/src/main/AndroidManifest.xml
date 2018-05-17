@@ -49,13 +49,24 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.dodo.journalmap.MainActivity" />
+
+        </activity>
+
+        <activity
+            android:name=".EditorActivity"
+            android:label="EditorActivity"
+            android:parentActivityName=".JournalActivity">
+                <meta-data
+                    android:name="android.support.EDITOR_ACTIVITY"
+                    android:value="com.example.dodo.journalmap.EditorActivity"/>
+
         </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".EditorActivity"></activity>
+
     </application>
 
 </manifest>
