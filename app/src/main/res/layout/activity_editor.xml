@@ -59,7 +59,8 @@
         android:name="com.google.android.gms.maps.MapFragment"
         app:layout_constraintBottom_toBottomOf="parent"
         map:cameraTargetLat="40.7484"
-        map:cameraTargetLng="-73.9857"/>
+        map:cameraTargetLng="-73.9857"
+        tools:context=".MapsActivity"/>
 
 
 

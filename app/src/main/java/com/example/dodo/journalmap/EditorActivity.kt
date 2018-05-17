@@ -35,9 +35,7 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editor)
-
-        var mapFragment = supportFragmentManager
-                .findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         // Set up for DB
