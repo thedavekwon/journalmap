@@ -15,6 +15,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.android.clustering.ClusterManager
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.ViewGroup
@@ -23,7 +26,9 @@ import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.google.maps.android.ui.IconGenerator
+import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
 import com.zhihu.matisse.engine.impl.PicassoEngine
@@ -32,6 +37,9 @@ import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlinx.android.synthetic.main.activity_journal.*
+import java.io.File
+import java.io.FileInputStream
 
 
 @RuntimePermissions
@@ -120,22 +128,17 @@ class JournalActivity : AppCompatActivity(),
                             mImageUri = it.toString(),
                             mName = "",
                             mText = "")
-                    val journalLocations = journalBox.get(mId)
-                    journalLocations.mJournalLocations?.add(journalLocation)
+                    val journal = journalBox.get(mId)
+                    journal.mJournalLocations?.add(journalLocation)
+                    journalBox.put(journal)
 
-                    //TODO()
-                    //val marker = mMap.addMarker(MarkerOptions()
-                    //                .position(LatLng(journalLocation.mLat,journalLocation.mLng))
-                    //                .title("Marker in ${journalLocation.mName}"))
-                    //mMarkers.add(marker)
-                    journalBox.put(journalLocations)
-                    //Log.v("journalbox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
-                    //Log.v("journalbox", "journalbox ${journalBox.get(mId).mJournalLocations?.get(0)}")
+                    //Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    //Log.v("journalBox", "journalBox ${journalBox.get(mId).mJournalLocations?.get(0)}")
                 }
                 journalBox.get(mId).mJournalLocations?.forEach {
                     journalLocationList.add(it)
                 }
-                //Log.v("", "journallocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
+                //Log.v("", "journalLocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
                 mAdapter.notifyDataSetChanged()
             } catch (e : Exception) {
                 e.printStackTrace()
@@ -302,9 +305,16 @@ class JournalActivity : AppCompatActivity(),
         }
 
         override fun onBeforeClusterItemRendered(item: JournalLocation?, markerOptions: MarkerOptions?) {
-            Picasso.with(applicationContext).load(item?.mImageUri).into(mImageView)
-            val icon = mIconGenerator.makeIcon()
-            markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item?.mName)
+            Picasso.with(applicationContext).load(item?.mImageUri).into(mImageView, object: Callback{
+                override fun onError() {
+                    return
+                }
+
+                override fun onSuccess() {
+                    val icon = mIconGenerator.makeIcon()
+                    markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item?.mName)
+                }
+            })
         }
 
         override fun onBeforeClusterRendered(cluster: Cluster<JournalLocation>?, markerOptions: MarkerOptions?) {
@@ -314,8 +324,12 @@ class JournalActivity : AppCompatActivity(),
 
             cluster.items.forEach {
                 if (journalLocationPhotos.size < 4) {
-                    Log.v("file", "${getPathFromUri(Uri.parse(it.mImageUri))} ")
-                    val drawable = Drawable.createFromPath(getPathFromUri(Uri.parse(it.mImageUri)))
+                    //Log.v("file", "${getPathFromUri(Uri.parse(it.mImageUri))} ")
+                    val drawable = BitmapDrawable(resources, Picasso.with(applicationContext)
+                            .load(it.mImageUri)
+                            .resize(50,50)
+                            .priority(Picasso.Priority.HIGH)
+                            .get())
                     drawable.setBounds(0, 0, width, height)
                     journalLocationPhotos.add(drawable)
                 }
@@ -339,6 +353,30 @@ class JournalActivity : AppCompatActivity(),
         val path = cursor.getString(cursor.getColumnIndex("_data"))
         cursor.close()
         return path
+    }
+
+    private fun decodeFile(f: File): Drawable? {
+        try {
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeStream(FileInputStream(f), null, options)
+
+            val REQUIRED_SIZE = 320
+            var scale = 1
+
+            while(options.outWidth / scale / 2 >= REQUIRED_SIZE &&
+                    options.outHeight / scale /2 >= REQUIRED_SIZE) {
+                scale = scale * 2
+            }
+
+            val options2 = BitmapFactory.Options()
+            options2.inSampleSize = scale
+            val bitmap = BitmapFactory.decodeStream(FileInputStream(f), null, options2)
+            return BitmapDrawable(resources, bitmap)
+        } catch(e : Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 }
 

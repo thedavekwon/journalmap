@@ -43,7 +43,7 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         val imageView = view?.findViewById<ImageView>(R.id.activity_journal_list_view_image)
         val textView = view?.findViewById<TextView>(R.id.activity_journal_list_view_name)
 
-        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerCrop().into(imageView)
+        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerInside().into(imageView)
         textView?.text = getItem(position).mName
 
         return view!!
