@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -21,8 +21,8 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:text="H"
-        app:layout_constraintRight_toRightOf="@+id/activity_journal_map"
-        app:layout_constraintBottom_toBottomOf="@+id/activity_journal_map"/>
+        app:layout_constraintBottom_toBottomOf="@+id/activity_journal_map"
+        app:layout_constraintRight_toRightOf="@+id/activity_journal_map" />
 
     <FrameLayout
         android:layout_width="match_parent"

@@ -15,6 +15,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.squareup.picasso.Picasso
 import android.support.v4.content.ContextCompat.startActivity
 import android.view.MotionEvent
+import org.w3c.dom.Text
 
 
 class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList<JournalLocation>) :
@@ -41,10 +42,15 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
 
 
         val imageView = view?.findViewById<ImageView>(R.id.activity_journal_list_view_image)
-        val textView = view?.findViewById<TextView>(R.id.activity_journal_list_view_name)
+
+        val nameView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Name)
+        val contextView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Context)
+        val dateView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Date)
 
         Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerCrop().into(imageView)
-        textView?.text = getItem(position).mName
+        nameView?.text = getItem(position).mName
+        contextView?.text = getItem(position).mText
+        dateView?.text = getItem(position).mDate
 
         return view!!
     }
