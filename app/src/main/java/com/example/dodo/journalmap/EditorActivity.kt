@@ -13,8 +13,12 @@ import io.objectbox.annotation.Id
 import io.objectbox.kotlin.boxFor
 import kotlinx.android.synthetic.main.activity_editor.*
 import com.google.android.gms.*
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.CameraUpdate
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 
 class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -22,21 +26,18 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var journalLocation: JournalLocation
     private lateinit var mButton: Button
     private lateinit var mMap: GoogleMap
-    private lateinit var curloc: LatLng
+
+    private val EDITOR_CODE = 100
+
+
+    private var mId = 0L
 
     private val PLACE_PICKER_REQUEST = 101
-    private val EDITOR_CODE = 100
-    private var mId = 0L
-    var draggableMarker = MarkerOptions()
-//
-//    var mapFragment = fragmentManager?.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editor)
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment?
-        mapFragment?.getMapAsync(this)
 
         // Set up for DB
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()
@@ -45,8 +46,8 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
         // Get info from DB
         journalLocation = journalLocationBox.get(mId)
 
-//        // Set up PlacePicker
-//        val intent =  PlacePicker.IntentBuilder() as Intent
+        // Set up PlacePicker
+//        val intent = PlacePicker.IntentBuilder() as Intent
 
         // Set up edit button
         activity_editor_edit_button.setOnClickListener {
@@ -59,61 +60,24 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
             journalLocationBox.put(journalLocation)
 
             setResult()
+
+
         }
-
-
-//        draggableMarker.icon.setOnMarkerDragListener{
-//
-//        }
-//        mMap.setOnMarkerDragListener(listener){
-//            draggableMarker.onMarkerDragStart()
-//            onMarkerDrag()
-//            onMarkerDragEnd()
-//            markerDragListener
-//        }
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-
+    override fun onMapReady(googleMap : GoogleMap){
         mMap = googleMap
-
-
-
-        var defaultposition = LatLng(40.7128, 74.0060)
-//        var default = CameraPosition.builder().target(defaultposition).build() as CameraPosition
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultposition))
-        mMap.addMarker(draggableMarker
-                .position(defaultposition)
-                .title("New Position")
-                .draggable(true)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
-
-
-    }
-
-    fun onMarkerDragStart(draggableMarker: Marker) {
-        curloc =  draggableMarker.position
-
-        Log.v("onMarkerDragStart",curloc.toString())
-    }
-
-    fun onMarkerDrag(draggableMarker: Marker) {
-        curloc = draggableMarker.position
-
-        Log.v("onMarkerDrag", curloc.toString())
-    }
-
-    fun onMarkerDragEnd(draggableMarker: Marker) {
-        curloc = draggableMarker.position
-
-        Log.v("onMarkerDrag", curloc.toString())
+        var defaultposition = LatLng(20.0,20.0)
+        var default  = CameraPosition.builder().target(defaultposition).build() as CameraPosition
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(default))
     }
 
     fun setResult() {
         val intent = Intent(this, JournalActivity::class.java)
-        setResult(Activity.RESULT_OK, intent)
+        setResult(Activity.RESULT_OK,intent)
         finish()
     }
+
 
 
 ////    fun updateJournalInfo{
