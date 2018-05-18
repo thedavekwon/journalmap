@@ -171,20 +171,29 @@ class MainCardAdapter(val journalList: ArrayList<Journal>, val dragStartListener
         notifyItemRangeRemoved(0, size)
     }
 
+    //TODO( only moves one card)
     override fun onItemMove(fromPosition: Int, toPosition: Int): Boolean {
         //Collections.swap(journalList, fromPosition, toPosition)
+        /*
+        Log.v("onItemMove", "$fromPosition -> $toPosition")
         if (fromPosition < toPosition) {
             for (i in fromPosition until toPosition) {
                 swapLoc(journalList[i], journalList[i+1])
+                notifyItemMoved(i, i+1)
                 //Collections.swap(journalList, i, i + 1)
             }
         } else {
             for (i in fromPosition downTo toPosition + 1) {
                 swapLoc(journalList[i], journalList[i-1])
+                notifyItemMoved(i, i-1)
                 //Collections.swap(journalList, i, i - 1)
             }
         }
+        */
+        Log.v("onItemMove", "$fromPosition -> $toPosition")
+        swapLoc(journalList[fromPosition], journalList[toPosition])
         notifyItemMoved(fromPosition, toPosition)
+        //notifyItemMoved(fromPosition, toPosition)
         return true
     }
 
@@ -196,5 +205,6 @@ class MainCardAdapter(val journalList: ArrayList<Journal>, val dragStartListener
         Log.v("swapLoc", "${journal1.mLoc}, ${journal2.mLoc}")
         journalBox.put(journal1)
         journalBox.put(journal2)
+        (context as MainActivity).updateCards()
     }
 }
