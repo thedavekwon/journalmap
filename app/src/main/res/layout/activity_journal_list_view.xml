@@ -21,7 +21,6 @@
             android:layout_height="wrap_content"
             android:paddingEnd="20dp"
             android:paddingStart="20dp"
-            android:text="Seoul"
             android:textSize="20sp" />
 
 
@@ -32,7 +31,6 @@
 
             android:paddingEnd="20dp"
             android:paddingStart="20dp"
-            android:text="My Birthday"
             android:textSize="20sp" />
 
         <TextView
@@ -41,7 +39,6 @@
             android:layout_height="wrap_content"
             android:paddingEnd="20dp"
             android:paddingStart="20dp"
-            android:text="April.03.2018"
             android:textSize="20sp" />
 
     </LinearLayout>

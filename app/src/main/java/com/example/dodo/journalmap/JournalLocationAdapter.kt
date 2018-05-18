@@ -25,12 +25,12 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         view?.setOnClickListener {
             (context as JournalActivity).moveMapCamera(LatLng(getItem(position).mLat, getItem(position).mLng))
             Log.v("latlng", "latlng ${getItem(position).mLat}, ${getItem(position).mLng}")
-
         }
 
         view?.setOnLongClickListener {
-            (context as JournalActivity).openEditor()
+            (context as JournalActivity).openEditor(getItem(position).id)
             Log.v("openEditor", "Opened textEditor")
+            Log.v("editorID", "${getItem(position).id}")
             true
         }
 

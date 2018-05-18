@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.media.ExifInterface
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -50,6 +51,7 @@ class JournalActivity : AppCompatActivity(),
         ClusterManager.OnClusterItemClickListener<JournalLocation> {
 
     private val REQUEST_CODE_CHOOSE = 23
+    private val EDITOR_CODE = 100
 
     private var lat = 0.0
     private var lng = 0.0
@@ -97,10 +99,8 @@ class JournalActivity : AppCompatActivity(),
         */
 
         // Set up for List View
-        activity_journal_list_view_itself.emptyView = findViewById(android.R.id.empty)
         mAdapter = JournalLocationAdapter(this@JournalActivity, R.layout.activity_journal_list_view, journalLocationList)
         activity_journal_list_view_itself.adapter = mAdapter
-        updateJournalLocation()
 
         // Set up for FAB
         activity_journal_fab.setOnClickListener {
@@ -121,29 +121,47 @@ class JournalActivity : AppCompatActivity(),
                 Matisse.obtainResult(data).forEach {
                     // Temp Location Name Title for now
                     var random = Random().nextFloat()
-                    random = (random + 10000.0f) / 10000
-                    //
-                    val journalLocation = JournalLocation(mLng = lng * random,
-                            mLat = lat * random,
+                    random = (random + 5000.0f) / 5000
+
+                    val filepath = getPathFromUri(it.toString())
+                    val exif = ExifInterface(filepath)
+                    val latlng = exifLatLng(exif)
+                    val journalLocation = JournalLocation(
+                            mLng = latlng[1],
+                            mLat = latlng[0],
                             mImageUri = it.toString(),
                             mName = "",
-                            mText = "")
+                            mText = "",
+                            mDate = "")
                     val journal = journalBox.get(mId)
                     Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     journal.mJournalLocations?.add(journalLocation)
                     journalBox.put(journal)
                     Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     //Log.v("journalBox", "journalBox ${journalBox.get(mId).mJournalLocations?.get(0)}")
+                    updateJournalLocation()
+                }
+                if (!journalLocationList.isEmpty()) {
+                    journalLocationList.clear()
                 }
                 journalBox.get(mId).mJournalLocations?.forEach {
                     journalLocationList.add(it)
                 }
                 //Log.v("", "journalLocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
+                updateJournalLocation()
                 mAdapter.notifyDataSetChanged()
             } catch (e : Exception) {
                 e.printStackTrace()
             }
         }
+        if(requestCode == EDITOR_CODE){
+            if(resultCode == Activity.RESULT_OK) {
+                Log.v("edited", "edited")
+                updateJournalLocation()
+                addItems()
+            }
+        }
+        mAdapter.notifyDataSetChanged()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
@@ -170,8 +188,8 @@ class JournalActivity : AppCompatActivity(),
         mClusterManager.setOnClusterItemClickListener(this)
         mClusterManager.setOnClusterItemInfoWindowClickListener(this)
 
-        addItems()
         mClusterManager.cluster()
+        updateJournalLocation()
     }
 
     override fun onClusterClick(cluster: Cluster<JournalLocation>?): Boolean {
@@ -243,15 +261,21 @@ class JournalActivity : AppCompatActivity(),
             journalLocationList.clear()
         }
 
+        var str = ""
+
         journalLocations?.forEach {
             journalLocationList.add(JournalLocation(
                     mText = it.mText,
                     mName = it.mName,
                     mImageUri = it.mImageUri,
                     mLat = it.mLat,
-                    mLng = it.mLng
+                    mLng = it.mLng,
+                    mDate = it.mDate,
+                    id = it.id
             ))
+            str = str + "${it.mName} "
         }
+        Log.v("update", str)
         mAdapter.notifyDataSetChanged()
     }
 
@@ -361,15 +385,29 @@ class JournalActivity : AppCompatActivity(),
         return null
     }
 
-    fun openEditor() {
+    private fun exifLatLng(exif: ExifInterface): ArrayList<Double> {
+        val array = ArrayList<Double>()
+        try {
+            val geoDegree = GeoDegree(exif)
+            val exifLat = geoDegree.latitude.toDouble()
+            val exifLng = geoDegree.longitude.toDouble()
+            Log.v("lat", "$exifLat")
+            array.addAll(arrayOf(exifLat, exifLng))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            array.addAll(arrayOf(lat, lng))
+        }
+        return array
+    }
+
+    fun openEditor(id : Long) {
         Log.v("openEditor", "openEditorActivity")
         val f = supportFragmentManager?.findFragmentById(R.id.activity_journal_map)
         if (f != null) {
             supportFragmentManager?.beginTransaction()?.remove(f)?.commit()
         }
         val editorIntent = Intent(this, EditorActivity::class.java)
-        editorIntent.putExtra("id", mId)
-        startActivity(editorIntent)
+        editorIntent.putExtra("id", id)
+        startActivityForResult(editorIntent, EDITOR_CODE)
     }
 }
-

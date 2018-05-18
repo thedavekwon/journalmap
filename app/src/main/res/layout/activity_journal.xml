@@ -24,27 +24,13 @@
         app:layout_constraintBottom_toBottomOf="@+id/activity_journal_map"
         app:layout_constraintRight_toRightOf="@+id/activity_journal_map" />
 
-    <FrameLayout
+    <ListView
+        android:id="@+id/activity_journal_list_view_itself"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/activity_journal_map" >
-
-
-        <ListView
-            android:id="@+id/activity_journal_list_view_itself"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:padding="4dp" />
-
-        <TextView
-            android:id="@android:id/empty"
-            style="@android:style/TextAppearance.Widget.TextView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="No Results" />
-
-    </FrameLayout>
+        android:layout_margin="4dp"
+        android:padding="4dp"
+        app:layout_constraintTop_toBottomOf="@id/activity_journal_map"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/activity_journal_fab"
