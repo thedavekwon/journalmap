@@ -29,7 +29,6 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         }
 
         view?.setOnLongClickListener {
-            (context as JournalActivity).supportFragmentManager.popBackStack()
             (context as JournalActivity).openEditor()
             Log.v("openEditor", "Opened textEditor")
             true
