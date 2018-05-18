@@ -8,4 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="LightThemeSelector" parent="android:style/Theme.Light"/>
+    <style name="amu_Bubble.TextAppearance.Light" parent="amu_Bubble.TextAppearance.Dark">
+        <item name="android:textColor">#ffeeeeee</item>
+    </style>
+    <style name="amu_Bubble.TextAppearance.Dark" parent="android:TextAppearance.Medium"/>
 </resources>

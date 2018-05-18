@@ -60,8 +60,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         val queue = Volley.newRequestQueue(activity?.applicationContext)
         val titleText = rootView.findViewById<EditText>(R.id.fragment_main_dialog_city_title)
         val saveBtn = rootView.findViewById<Button>(R.id.fragment_main_dialog_city_save)
-        var mProgressStatus = 0
-        val mHandler = Handler()
         mProgressBar = rootView.findViewById(R.id.fragment_main_dialog_search_progress_bar)
         //val waveBounce: Wave = Wave()
 
@@ -78,31 +76,10 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
             Log.v("name", nameText.text.toString())
             try {
-
-//                    Thread(Runnable {
-//                        override fun run() {
-//                            while (mProgressStatus < 100) {
-//                                mProgressStatus++
-//                                android.os.SystemClock.sleep(50)
-//                                mHandler.post(Runnable() {
-//                                    override fun run() {
-//                                        mProgressBar.setProgress(mProgressStatus)
-//                                    }
-//                                })
-//                            }
-//                        }
-//                        mHandler.post(Runnable() {
-//                            override fun run() {
-//                                mProgressBar.setVisibility(View.VISIBLE);
-//
-//
-//                            }
-//                        })
-
                 queue.add(getLocationFromGoogle(nameText.text.toString()))
             } catch (e: Exception) {
+                e.printStackTrace()
                 Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
-
             }
         }
 
@@ -159,11 +136,11 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         }
     }
 
-    fun getLocationFromGoogle(loc: String): JsonObjectRequest {
+    private fun getLocationFromGoogle(loc: String): JsonObjectRequest {
 
         val preprocessedName = loc.replace(" ", "%20")
         val url = googleMapApiUrl + preprocessedName
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
+        return JsonObjectRequest(Request.Method.GET, url, null,
                 Response.Listener { response ->
 
                     try {
@@ -183,7 +160,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 9.0f))
                         Log.v("map", "$lat, $lng")
 
-
                     } catch (e: Exception) {
                         Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
 
@@ -198,7 +174,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
                 }
         )
-        return jsonObjectRequest
     }
 
     @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)

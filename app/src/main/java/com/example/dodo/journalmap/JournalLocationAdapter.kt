@@ -2,8 +2,6 @@ package com.example.dodo.journalmap
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,9 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.gms.maps.model.LatLng
 import com.squareup.picasso.Picasso
-import android.support.v4.content.ContextCompat.startActivity
-import android.view.MotionEvent
-import org.w3c.dom.Text
 
 
 class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList<JournalLocation>) :
@@ -39,19 +34,14 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
             true
         }
 
-
-
         val imageView = view?.findViewById<ImageView>(R.id.activity_journal_list_view_image)
+        val textView = view?.findViewById<TextView>(R.id.activity_journal_list_view_name)
 
-        val nameView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Name)
-        val contextView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Context)
-        val dateView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Date)
-
-        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerCrop().into(imageView)
-        nameView?.text = getItem(position).mName
-        contextView?.text = getItem(position).mText
-        dateView?.text = getItem(position).mDate
+        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerInside().into(imageView)
+        textView?.text = getItem(position).mName
 
         return view!!
     }
+
+
 }

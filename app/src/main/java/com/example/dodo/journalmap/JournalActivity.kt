@@ -1,6 +1,8 @@
 package com.example.dodo.journalmap
 
 import android.app.Activity
+import android.app.Fragment
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -11,17 +13,21 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.android.synthetic.main.activity_journal.*
+import com.google.maps.android.clustering.ClusterManager
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
-import android.view.MotionEvent
-import android.view.View
-import android.widget.Button
-import com.example.dodo.journalmap.JournalLocation_.journal
-import com.example.dodo.journalmap.R.id.*
-import com.google.android.gms.maps.model.Marker
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.view.ViewGroup
+import android.widget.ImageView
+import com.google.android.gms.maps.internal.IGoogleMapDelegate
+import com.google.android.gms.maps.model.*
+import com.google.maps.android.clustering.Cluster
+import com.google.maps.android.clustering.view.DefaultClusterRenderer
+import com.google.maps.android.ui.IconGenerator
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
 import com.zhihu.matisse.engine.impl.PicassoEngine
@@ -30,13 +36,20 @@ import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlinx.android.synthetic.main.activity_journal.*
+import java.io.File
+import java.io.FileInputStream
 
 
 @RuntimePermissions
-class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
+class JournalActivity : AppCompatActivity(),
+        OnMapReadyCallback,
+        ClusterManager.OnClusterClickListener<JournalLocation>,
+        ClusterManager.OnClusterInfoWindowClickListener<JournalLocation>,
+        ClusterManager.OnClusterItemInfoWindowClickListener<JournalLocation>,
+        ClusterManager.OnClusterItemClickListener<JournalLocation> {
 
     private val REQUEST_CODE_CHOOSE = 23
-    private val EDITOR_CODE = 100
 
     private var lat = 0.0
     private var lng = 0.0
@@ -45,14 +58,16 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var mAdapter: JournalLocationAdapter
+    private lateinit var mapFragment: SupportMapFragment
 
     private lateinit var journalQuery: Query<Journal>
     private lateinit var journalBox: Box<Journal>
     private lateinit var journalLocationBox: Box<JournalLocation>
 
+    private lateinit var mClusterManager: ClusterManager<JournalLocation>
 
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
-    private var mMarkers: ArrayList<Marker> = ArrayList()
+    //private var mMarkers: ArrayList<Marker> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
@@ -65,7 +80,7 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         mId = intent.getLongExtra("id", 0)
 
         setContentView(R.layout.activity_journal)
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
+        mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         // Set up for DB
@@ -96,16 +111,6 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         activity_journal_home_button.setOnClickListener {
             moveToDefaultLocation()
         }
-
-
-        // Set up for View Model
-        /*
-        val model: JournalLocationViewModel = ViewModelProviders.of(this).get(JournalLocationViewModel::class.java)
-        model.getJournalLocationLiveData(journalLocationBox).observe(this, android.arch.lifecycle.Observer<List<JournalLocation>> {
-            journalLocationList = ArrayList(it)
-            mAdapter.notifyDataSetChanged()
-        })
-        */
     }
 
 
@@ -123,33 +128,22 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
                             mImageUri = it.toString(),
                             mName = "",
                             mText = "")
-                    val journalLocations = journalBox.get(mId)
-                    journalLocations.mJournalLocations?.add(journalLocation)
-
-                    //TODO()
-                    val marker = mMap.addMarker(MarkerOptions()
-                                    .position(LatLng(journalLocation.mLat,journalLocation.mLng))
-                                    .title("Marker in ${journalLocation.mName}"))
-                    mMarkers.add(marker)
-                    journalBox.put(journalLocations)
-                    //Log.v("journalbox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
-                    //Log.v("journalbox", "journalbox ${journalBox.get(mId).mJournalLocations?.get(0)}")
+                    val journal = journalBox.get(mId)
+                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    journal.mJournalLocations?.add(journalLocation)
+                    journalBox.put(journal)
+                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    //Log.v("journalBox", "journalBox ${journalBox.get(mId).mJournalLocations?.get(0)}")
                 }
                 journalBox.get(mId).mJournalLocations?.forEach {
                     journalLocationList.add(it)
                 }
-                //Log.v("", "journallocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
+                //Log.v("", "journalLocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
                 mAdapter.notifyDataSetChanged()
             } catch (e : Exception) {
                 e.printStackTrace()
             }
         }
-        if(requestCode == EDITOR_CODE){
-            if(resultCode == Activity.RESULT_OK) {
-                updateJournalLocation()
-            }
-        }
-        mAdapter.notifyDataSetChanged()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
@@ -162,6 +156,52 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         val curLoc = LatLng(lat, lng)
         mMap.moveCamera(CameraUpdateFactory.newLatLng(curLoc))
+
+        // Cluster Manager
+        mClusterManager = ClusterManager<JournalLocation>(this, mMap)
+        mClusterManager.renderer = JournalLocationRenderer()
+
+        mMap.setOnCameraIdleListener(mClusterManager)
+        mMap.setOnMarkerClickListener(mClusterManager)
+        mMap.setOnInfoWindowClickListener(mClusterManager)
+
+        mClusterManager.setOnClusterClickListener(this)
+        mClusterManager.setOnClusterInfoWindowClickListener(this)
+        mClusterManager.setOnClusterItemClickListener(this)
+        mClusterManager.setOnClusterItemInfoWindowClickListener(this)
+
+        addItems()
+        mClusterManager.cluster()
+    }
+
+    override fun onClusterClick(cluster: Cluster<JournalLocation>?): Boolean {
+        val firstName = cluster!!.items.iterator().next().mName
+        Toast.makeText(this, "${cluster.getSize()} including $firstName)", Toast.LENGTH_SHORT).show()
+
+        val builder = LatLngBounds.builder()
+        cluster.items.forEach { builder.include(it.position) }
+
+        val bounds = builder.build()
+
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return true
+    }
+
+    override fun onClusterInfoWindowClick(cluster: Cluster<JournalLocation>?) {
+        return
+    }
+
+    override fun onClusterItemInfoWindowClick(p0: JournalLocation?) {
+        return
+    }
+
+    override fun onClusterItemClick(p0: JournalLocation?): Boolean {
+        return false
     }
 
     @NeedsPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -204,7 +244,13 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         journalLocations?.forEach {
-            journalLocationList.add(it)
+            journalLocationList.add(JournalLocation(
+                    mText = it.mText,
+                    mName = it.mName,
+                    mImageUri = it.mImageUri,
+                    mLat = it.mLat,
+                    mLng = it.mLng
+            ))
         }
         mAdapter.notifyDataSetChanged()
     }
@@ -217,27 +263,113 @@ class JournalActivity : AppCompatActivity(), OnMapReadyCallback {
         moveMapCamera(LatLng(lat, lng))
     }
 
-    fun openEditor() {
-        Log.v("openEditor", "openEditorActivity")
-        val editorIntent = Intent(this, EditorActivity::class.java)
-        editorIntent.putExtra("id", mId)
-        startActivityForResult(editorIntent, EDITOR_CODE)
-    }
-
-
-
-
-/*
-    class JournalLocationViewModel : ViewModel() {
-
-        private lateinit var journalLocationLiveData: ObjectBoxLiveData<JournalLocation>
-
-        fun getJournalLocationLiveData(journalLocationBox: Box<JournalLocation>?) : ObjectBoxLiveData<JournalLocation> {
-            if (journalLocationLiveData == null) {
-                journalLocationLiveData = ObjectBoxLiveData<JournalLocation>(journalLocationBox?.query()?.build())
-            }
-            return journalLocationLiveData
+    private fun addItems() {
+        journalLocationList.forEach {
+            mClusterManager.addItem(it)
         }
     }
-*/
+
+    private inner class JournalLocationRenderer(context: Context,
+                                                map: GoogleMap,
+                                                clusterManager: ClusterManager<JournalLocation>) :
+            DefaultClusterRenderer<JournalLocation>(context, map, clusterManager) {
+
+        private val mIconGenerator = IconGenerator(applicationContext)
+        private val mClusterIconGenerator = IconGenerator(applicationContext)
+
+        private lateinit var mImageView: ImageView
+        private lateinit var mClusterImageView: ImageView
+        private var mDimension = 0
+
+
+        constructor() : this(applicationContext, mMap, mClusterManager) {
+            val multiProfile = layoutInflater.inflate(R.layout.multi_profile, null)
+            mClusterIconGenerator.setContentView(multiProfile)
+            mClusterImageView = multiProfile.findViewById(R.id.multi_profile_image) as ImageView
+
+            mImageView = ImageView(applicationContext)
+            mDimension = resources.getDimension(R.dimen.custom_profile_image).toInt()
+            mImageView.layoutParams = ViewGroup.LayoutParams(mDimension, mDimension)
+            val padding = resources.getDimension(R.dimen.custom_profile_padding).toInt()
+
+            mImageView.setPadding(padding, padding, padding, padding)
+            mIconGenerator.setContentView(mImageView)
+        }
+
+        override fun onBeforeClusterItemRendered(item: JournalLocation?, markerOptions: MarkerOptions?) {
+            mImageView.setImageDrawable(decodeFile(File(getPathFromUri(item!!.mImageUri))))
+            val icon = mIconGenerator.makeIcon()
+            markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item.mName)
+        }
+
+        override fun onBeforeClusterRendered(cluster: Cluster<JournalLocation>?, markerOptions: MarkerOptions?) {
+            val journalLocationPhotos = ArrayList<Drawable>(Math.min(4, cluster!!.size))
+            val width = mDimension
+            val height = mDimension
+
+            cluster.items.forEach {
+                if (journalLocationPhotos.size < 4) {
+                    Log.v("file", "${File(getPathFromUri(it.mImageUri))}")
+                    val drawable = decodeFile(File(getPathFromUri(it.mImageUri)))
+                    drawable!!.setBounds(0, 0, width, height)
+                    journalLocationPhotos.add(drawable)
+                }
+            }
+            val multiDrawable = MultiDrawable(journalLocationPhotos)
+            multiDrawable.setBounds(0, 0, width, height)
+
+            mClusterImageView.setImageDrawable(multiDrawable)
+            val icon = mClusterIconGenerator.makeIcon(cluster.size.toString())
+            markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))
+        }
+
+        override fun shouldRenderAsCluster(cluster: Cluster<JournalLocation>?): Boolean {
+            return cluster!!.size > 1
+        }
+    }
+
+    private fun getPathFromUri(uri: String): String? {
+        val contentUri = Uri.parse(uri)
+        val cursor = contentResolver.query(contentUri, null, null, null, null)
+        cursor.moveToNext()
+        val path = cursor.getString(cursor.getColumnIndex("_data"))
+        cursor.close()
+        return path
+    }
+
+    private fun decodeFile(f: File): Drawable? {
+        try {
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeStream(FileInputStream(f), null, options)
+
+            val REQUIRED_SIZE = 320
+            var scale = 2
+
+            while(options.outWidth / scale / 2 >= REQUIRED_SIZE &&
+                    options.outHeight / scale /2 >= REQUIRED_SIZE) {
+                scale *= 2
+            }
+
+            val options2 = BitmapFactory.Options()
+            options2.inSampleSize = scale
+            val bitmap = BitmapFactory.decodeStream(FileInputStream(f), null, options2)
+            return BitmapDrawable(resources, bitmap)
+        } catch(e : Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    fun openEditor() {
+        Log.v("openEditor", "openEditorActivity")
+        val f = supportFragmentManager?.findFragmentById(R.id.activity_journal_map)
+        if (f != null) {
+            supportFragmentManager?.beginTransaction()?.remove(f)?.commit()
+        }
+        val editorIntent = Intent(this, EditorActivity::class.java)
+        editorIntent.putExtra("id", mId)
+        startActivity(editorIntent)
+    }
 }
+
