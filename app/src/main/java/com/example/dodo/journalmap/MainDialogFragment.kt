@@ -78,8 +78,8 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
             try {
                 queue.add(getLocationFromGoogle(nameText.text.toString()))
             } catch (e: Exception) {
+                e.printStackTrace()
                 Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
-
             }
         }
 
@@ -136,11 +136,11 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         }
     }
 
-    fun getLocationFromGoogle(loc: String): JsonObjectRequest {
+    private fun getLocationFromGoogle(loc: String): JsonObjectRequest {
 
         val preprocessedName = loc.replace(" ", "%20")
         val url = googleMapApiUrl + preprocessedName
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
+        return JsonObjectRequest(Request.Method.GET, url, null,
                 Response.Listener { response ->
 
                     try {
@@ -160,7 +160,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 9.0f))
                         Log.v("map", "$lat, $lng")
 
-
                     } catch (e: Exception) {
                         Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
 
@@ -175,7 +174,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
                 }
         )
-        return jsonObjectRequest
     }
 
     @OnShowRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)

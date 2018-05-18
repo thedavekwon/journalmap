@@ -35,8 +35,8 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editor)
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
 
         // Set up for DB
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()

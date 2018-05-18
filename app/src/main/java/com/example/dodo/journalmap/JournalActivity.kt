@@ -1,6 +1,7 @@
 package com.example.dodo.journalmap
 
 import android.app.Activity
+import android.app.Fragment
 import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
@@ -22,13 +23,11 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.google.android.gms.maps.internal.IGoogleMapDelegate
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.google.maps.android.ui.IconGenerator
-import com.squareup.picasso.Callback
-import com.squareup.picasso.Picasso
-import com.squareup.picasso.Target
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
 import com.zhihu.matisse.engine.impl.PicassoEngine
@@ -59,6 +58,7 @@ class JournalActivity : AppCompatActivity(),
 
     private lateinit var mMap: GoogleMap
     private lateinit var mAdapter: JournalLocationAdapter
+    private lateinit var mapFragment: SupportMapFragment
 
     private lateinit var journalQuery: Query<Journal>
     private lateinit var journalBox: Box<Journal>
@@ -80,7 +80,7 @@ class JournalActivity : AppCompatActivity(),
         mId = intent.getLongExtra("id", 0)
 
         setContentView(R.layout.activity_journal)
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
+        mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         // Set up for DB
@@ -129,10 +129,10 @@ class JournalActivity : AppCompatActivity(),
                             mName = "",
                             mText = "")
                     val journal = journalBox.get(mId)
+                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     journal.mJournalLocations?.add(journalLocation)
                     journalBox.put(journal)
-
-                    //Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
+                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     //Log.v("journalBox", "journalBox ${journalBox.get(mId).mJournalLocations?.get(0)}")
                 }
                 journalBox.get(mId).mJournalLocations?.forEach {
@@ -263,14 +263,6 @@ class JournalActivity : AppCompatActivity(),
         moveMapCamera(LatLng(lat, lng))
     }
 
-    fun openEditor() {
-        Log.v("openEditor", "openEditorActivity")
-        val editorIntent = Intent(this, EditorActivity::class.java)
-        editorIntent.putExtra("id", mId)
-        startActivity(editorIntent)
-        finish()
-    }
-
     private fun addItems() {
         journalLocationList.forEach {
             mClusterManager.addItem(it)
@@ -305,16 +297,9 @@ class JournalActivity : AppCompatActivity(),
         }
 
         override fun onBeforeClusterItemRendered(item: JournalLocation?, markerOptions: MarkerOptions?) {
-            Picasso.with(applicationContext).load(item?.mImageUri).into(mImageView, object: Callback{
-                override fun onError() {
-                    return
-                }
-
-                override fun onSuccess() {
-                    val icon = mIconGenerator.makeIcon()
-                    markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item?.mName)
-                }
-            })
+            mImageView.setImageDrawable(decodeFile(File(getPathFromUri(item!!.mImageUri))))
+            val icon = mIconGenerator.makeIcon()
+            markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item.mName)
         }
 
         override fun onBeforeClusterRendered(cluster: Cluster<JournalLocation>?, markerOptions: MarkerOptions?) {
@@ -324,13 +309,9 @@ class JournalActivity : AppCompatActivity(),
 
             cluster.items.forEach {
                 if (journalLocationPhotos.size < 4) {
-                    //Log.v("file", "${getPathFromUri(Uri.parse(it.mImageUri))} ")
-                    val drawable = BitmapDrawable(resources, Picasso.with(applicationContext)
-                            .load(it.mImageUri)
-                            .resize(50,50)
-                            .priority(Picasso.Priority.HIGH)
-                            .get())
-                    drawable.setBounds(0, 0, width, height)
+                    Log.v("file", "${File(getPathFromUri(it.mImageUri))}")
+                    val drawable = decodeFile(File(getPathFromUri(it.mImageUri)))
+                    drawable!!.setBounds(0, 0, width, height)
                     journalLocationPhotos.add(drawable)
                 }
             }
@@ -347,7 +328,8 @@ class JournalActivity : AppCompatActivity(),
         }
     }
 
-    private fun getPathFromUri(contentUri: Uri): String? {
+    private fun getPathFromUri(uri: String): String? {
+        val contentUri = Uri.parse(uri)
         val cursor = contentResolver.query(contentUri, null, null, null, null)
         cursor.moveToNext()
         val path = cursor.getString(cursor.getColumnIndex("_data"))
@@ -362,11 +344,11 @@ class JournalActivity : AppCompatActivity(),
             BitmapFactory.decodeStream(FileInputStream(f), null, options)
 
             val REQUIRED_SIZE = 320
-            var scale = 1
+            var scale = 2
 
             while(options.outWidth / scale / 2 >= REQUIRED_SIZE &&
                     options.outHeight / scale /2 >= REQUIRED_SIZE) {
-                scale = scale * 2
+                scale *= 2
             }
 
             val options2 = BitmapFactory.Options()
@@ -377,6 +359,17 @@ class JournalActivity : AppCompatActivity(),
             e.printStackTrace()
         }
         return null
+    }
+
+    fun openEditor() {
+        Log.v("openEditor", "openEditorActivity")
+        val f = supportFragmentManager?.findFragmentById(R.id.activity_journal_map)
+        if (f != null) {
+            supportFragmentManager?.beginTransaction()?.remove(f)?.commit()
+        }
+        val editorIntent = Intent(this, EditorActivity::class.java)
+        editorIntent.putExtra("id", mId)
+        startActivity(editorIntent)
     }
 }
 

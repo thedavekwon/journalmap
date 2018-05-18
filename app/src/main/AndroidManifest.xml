@@ -57,8 +57,8 @@
             android:label="EditorActivity"
             android:parentActivityName=".JournalActivity">
                 <meta-data
-                    android:name="android.support.EDITOR_ACTIVITY"
-                    android:value="com.example.dodo.journalmap.EditorActivity"/>
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value="com.example.dodo.journalmap.MainActivity"/>
 
         </activity>
 
