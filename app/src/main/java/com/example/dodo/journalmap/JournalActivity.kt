@@ -69,7 +69,6 @@ class JournalActivity : AppCompatActivity(),
     private lateinit var mClusterManager: ClusterManager<JournalLocation>
 
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
-    //private var mMarkers: ArrayList<Marker> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
@@ -159,6 +158,7 @@ class JournalActivity : AppCompatActivity(),
                 Log.v("edited", "edited")
                 updateJournalLocation()
                 addItems()
+
             }
         }
         mAdapter.notifyDataSetChanged()
@@ -288,9 +288,11 @@ class JournalActivity : AppCompatActivity(),
     }
 
     private fun addItems() {
+        mClusterManager.clearItems()
         journalLocationList.forEach {
             mClusterManager.addItem(it)
         }
+        mClusterManager.cluster()
     }
 
     private inner class JournalLocationRenderer(context: Context,
@@ -401,11 +403,6 @@ class JournalActivity : AppCompatActivity(),
     }
 
     fun openEditor(id : Long) {
-        Log.v("openEditor", "openEditorActivity")
-        val f = supportFragmentManager?.findFragmentById(R.id.activity_journal_map)
-        if (f != null) {
-            supportFragmentManager?.beginTransaction()?.remove(f)?.commit()
-        }
         val editorIntent = Intent(this, EditorActivity::class.java)
         editorIntent.putExtra("id", id)
         startActivityForResult(editorIntent, EDITOR_CODE)

@@ -35,10 +35,17 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         }
 
         val imageView = view?.findViewById<ImageView>(R.id.activity_journal_list_view_image)
-        val textView = view?.findViewById<TextView>(R.id.activity_journal_list_view_name)
 
-        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerInside().into(imageView)
-        textView?.text = getItem(position).mName
+        val nameView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Name)
+        val contextView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Context)
+        val dateView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Date)
+
+        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerCrop().into(imageView)
+        nameView?.text = getItem(position).mName
+        contextView?.text = getItem(position).mText
+        dateView?.text = getItem(position).mDate
+
+        Log.v("adapter", "${getItem(position).mName} ${getItem(position).mText} ${getItem(position).mDate}")
 
         return view!!
     }
