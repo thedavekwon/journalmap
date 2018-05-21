@@ -1,13 +1,13 @@
 package com.example.dodo.journalmap
 
 
-import android.graphics.Canvas;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
+import android.content.Context
+import android.graphics.Canvas
+import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
+import com.ontbee.legacyforks.cn.pedant.SweetAlert.SweetAlertDialog
 
-
-class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter) : ItemTouchHelper.Callback() {
+class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter, private val context: Context) : ItemTouchHelper.Callback() {
 
     override fun isLongPressDragEnabled(): Boolean {
         return true
@@ -36,7 +36,16 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, i: Int) {
         // Notify the adapter of the dismissal
-        mAdapter.onItemDismiss(viewHolder.adapterPosition)
+        SweetAlertDialog(context, SweetAlertDialog.WARNING_TYPE)
+                .setTitleText("Are you sure?")
+                .setContentText("Won't be able to recover this file!")
+                .setConfirmText("Yes, delete it!")
+                .setConfirmClickListener {
+                    mAdapter.onItemDismiss(viewHolder.adapterPosition)
+                    it.dismissWithAnimation()
+                }
+                .show()
+        (context as MainActivity).updateCards()
     }
 
     override fun onChildDraw(c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {

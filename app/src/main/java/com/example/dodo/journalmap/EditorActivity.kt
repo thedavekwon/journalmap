@@ -28,9 +28,6 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
     private val EDITOR_CODE = 100
     private var mId = 0L
     var draggableMarker = MarkerOptions()
-//
-//    var mapFragment = fragmentManager?.findFragmentById(R.id.activity_editor_Map) as SupportMapFragment
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,87 +43,32 @@ class EditorActivity : AppCompatActivity(), OnMapReadyCallback {
         // Get info from DB
         journalLocation = journalLocationBox.get(mId)
 
-//        // Set up PlacePicker
-//        val intent =  PlacePicker.IntentBuilder() as Intent
-
         // Set up edit button
         activity_editor_edit_button.setOnClickListener {
             journalLocation.mText = activity_editor_Context.editText?.text.toString()
             journalLocation.mName = activity_editor_Name.editText?.text.toString()
             journalLocation.mDate = activity_editor_Date.editText?.text.toString()
-
             journalLocationBox.put(journalLocation)
-
             setResult()
         }
-
-
-//        draggableMarker.icon.setOnMarkerDragListener{
-//
-//        }
-//        mMap.setOnMarkerDragListener(listener){
-//            draggableMarker.onMarkerDragStart()
-//            onMarkerDrag()
-//            onMarkerDragEnd()
-//            markerDragListener
-//        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
 
         mMap = googleMap
 
-
-
         var defaultposition = LatLng(40.7128, 74.0060)
-//        var default = CameraPosition.builder().target(defaultposition).build() as CameraPosition
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultposition))
         mMap.addMarker(draggableMarker
                 .position(defaultposition)
                 .title("New Position")
                 .draggable(true)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
-
-
     }
 
-    fun onMarkerDragStart(draggableMarker: Marker) {
-        curloc =  draggableMarker.position
-
-        Log.v("onMarkerDragStart",curloc.toString())
-    }
-
-    fun onMarkerDrag(draggableMarker: Marker) {
-        curloc = draggableMarker.position
-
-        Log.v("onMarkerDrag", curloc.toString())
-    }
-
-    fun onMarkerDragEnd(draggableMarker: Marker) {
-        curloc = draggableMarker.position
-
-        Log.v("onMarkerDrag", curloc.toString())
-    }
-
-    fun setResult() {
+    private fun setResult() {
         val intent = Intent(this, JournalActivity::class.java)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
-
-
-////    fun updateJournalInfo{
-////        journalLocation = journalLocationBox.get(mId)
-////        journalLocation.add(JournalLocation {
-////
-////            journalLocationList.add(JournalLocation(
-////                    mText = it.mText,
-////                    mName = it.mName,
-////                    mImageUri = it.mImageUri,
-////                    mLat = it.mLat,
-////                    mLng = it.mLng
-////            ))
-////        }
-////                mAdapter . notifyDataSetChanged ()
-//    }
 }
