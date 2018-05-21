@@ -1,7 +1,6 @@
 package com.example.dodo.journalmap
 
 import android.app.Activity
-import android.app.Fragment
 import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
@@ -16,7 +15,6 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.android.clustering.ClusterManager
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
@@ -24,7 +22,10 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.view.ViewGroup
 import android.widget.ImageView
-import com.google.android.gms.maps.internal.IGoogleMapDelegate
+import com.akexorcist.googledirection.DirectionCallback
+import com.akexorcist.googledirection.GoogleDirection
+import com.akexorcist.googledirection.constant.TransportMode
+import com.akexorcist.googledirection.model.Direction
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -35,7 +36,6 @@ import com.zhihu.matisse.engine.impl.PicassoEngine
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
-import java.util.*
 import kotlin.collections.ArrayList
 import kotlinx.android.synthetic.main.activity_journal.*
 import java.io.File
@@ -74,7 +74,6 @@ class JournalActivity : AppCompatActivity(),
         // Set up for View
         super.onCreate(savedInstanceState)
 
-
         lat = intent.getDoubleExtra("latitude", 0.0)
         lng = intent.getDoubleExtra("longitude", 0.0)
         name = intent.getStringExtra("name")
@@ -88,14 +87,6 @@ class JournalActivity : AppCompatActivity(),
         journalBox = (application as App).boxStore.boxFor<Journal>()
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()
         journalQuery = journalBox.query().build()
-
-        /*
-        Log.v("id", "id $mId")
-        val q = journalQuery.find()
-        q.forEach {
-            Log.v("id", "id is ${it.id}")
-        }
-        */
 
         // Set up for List View
         mAdapter = JournalLocationAdapter(this@JournalActivity, R.layout.activity_journal_list_view, journalLocationList)
@@ -115,40 +106,26 @@ class JournalActivity : AppCompatActivity(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Log.v("onActivityResult", "$requestCode, $resultCode")
         if (requestCode == REQUEST_CODE_CHOOSE && resultCode == Activity.RESULT_OK) {
             try {
                 Matisse.obtainResult(data).forEach {
-                    // Temp Location Name Title for now
-                    var random = Random().nextFloat()
-                    random = (random + 5000.0f) / 5000
-
                     val filepath = getPathFromUri(it.toString())
                     val exif = ExifInterface(filepath)
-                    val latlng = exifLatLng(exif)
+                    val latLng = exifLatLng(exif)
                     val journalLocation = JournalLocation(
-                            mLng = latlng[1],
-                            mLat = latlng[0],
+                            mLat = latLng[0],
+                            mLng = latLng[1],
                             mImageUri = it.toString(),
                             mName = "",
                             mText = "",
                             mDate = "")
                     val journal = journalBox.get(mId)
-                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
                     journal.mJournalLocations?.add(journalLocation)
                     journalBox.put(journal)
-                    Log.v("journalBox", "size is ${journalBox.get(mId).mJournalLocations?.size}")
-                    //Log.v("journalBox", "journalBox ${journalBox.get(mId).mJournalLocations?.get(0)}")
-                    updateJournalLocation()
                 }
-                if (!journalLocationList.isEmpty()) {
-                    journalLocationList.clear()
-                }
-                journalBox.get(mId).mJournalLocations?.forEach {
-                    journalLocationList.add(it)
-                }
-                //Log.v("", "journalLocation ${journalBox.get(mId).mJournalLocations?.get(0)?.mImageUri}")
                 updateJournalLocation()
-                mAdapter.notifyDataSetChanged()
+                updateJournalPath()
             } catch (e : Exception) {
                 e.printStackTrace()
             }
@@ -157,8 +134,7 @@ class JournalActivity : AppCompatActivity(),
             if(resultCode == Activity.RESULT_OK) {
                 Log.v("edited", "edited")
                 updateJournalLocation()
-                addItems()
-
+                updateJournalPath()
             }
         }
         mAdapter.notifyDataSetChanged()
@@ -190,11 +166,12 @@ class JournalActivity : AppCompatActivity(),
 
         mClusterManager.cluster()
         updateJournalLocation()
+        updateJournalPath()
     }
 
     override fun onClusterClick(cluster: Cluster<JournalLocation>?): Boolean {
         val firstName = cluster!!.items.iterator().next().mName
-        Toast.makeText(this, "${cluster.getSize()} including $firstName)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "${cluster.size} including $firstName)", Toast.LENGTH_SHORT).show()
 
         val builder = LatLngBounds.builder()
         cluster.items.forEach { builder.include(it.position) }
@@ -255,35 +232,66 @@ class JournalActivity : AppCompatActivity(),
     }
 
     private fun updateJournalLocation() {
+        if (checkNoDifference()) return
         val journalLocations = journalBox.get(mId).mJournalLocations
-
         if (!journalLocationList.isEmpty()) {
             journalLocationList.clear()
         }
-
-        var str = ""
-
         journalLocations?.forEach {
-            journalLocationList.add(JournalLocation(
-                    mText = it.mText,
-                    mName = it.mName,
-                    mImageUri = it.mImageUri,
-                    mLat = it.mLat,
-                    mLng = it.mLng,
-                    mDate = it.mDate,
-                    id = it.id
-            ))
-            str = str + "${it.mName} "
+            journalLocationList.add(it)
         }
-        Log.v("update", str)
+        addItems()
         mAdapter.notifyDataSetChanged()
+        mClusterManager.cluster()
+    }
+
+    private fun updateJournalPath() {
+        if (journalLocationList.size < 2) return
+        if (checkNoDifference()) return
+        val size = journalLocationList.size
+        val start = LatLng(journalLocationList[0].mLat, journalLocationList[0].mLng)
+        val locList = ArrayList<LatLng>()
+        for (i in 1 until size-1) {
+            locList.add(LatLng(journalLocationList[i].mLat, journalLocationList[i].mLng))
+        }
+        val last = LatLng(journalLocationList[size-1].mLat, journalLocationList[size-1].mLng)
+
+        Log.v("path", "$start, $locList, $last")
+
+        GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
+                .from(start)
+                .and(locList)
+                .to(last)
+                .transportMode(TransportMode.WALKING)
+                .execute(object: DirectionCallback{
+                    override fun onDirectionFailure(t: Throwable?) {
+                        Toast.makeText(this@JournalActivity, "failed", Toast.LENGTH_SHORT)
+                    }
+
+                    override fun onDirectionSuccess(direction: Direction?, rawBody: String?) {
+                        Toast.makeText(this@JournalActivity, "succeed", Toast.LENGTH_SHORT)
+                    }
+                })
+    }
+
+    private fun checkNoDifference(): Boolean {
+        val journalLocations = journalBox.get(mId).mJournalLocations
+        if (journalLocationList.size != journalLocations?.size) {
+            return false
+        }
+        for (i in 0 until journalLocationList.size) {
+            if (journalLocationList[i].id != journalLocations[i].id) {
+                return false
+            }
+        }
+        return true
     }
 
     fun moveMapCamera(latLng: LatLng) {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
-    fun moveToDefaultLocation(){
+    private fun moveToDefaultLocation(){
         moveMapCamera(LatLng(lat, lng))
     }
 
@@ -292,7 +300,6 @@ class JournalActivity : AppCompatActivity(),
         journalLocationList.forEach {
             mClusterManager.addItem(it)
         }
-        mClusterManager.cluster()
     }
 
     private inner class JournalLocationRenderer(context: Context,
@@ -335,7 +342,6 @@ class JournalActivity : AppCompatActivity(),
 
             cluster.items.forEach {
                 if (journalLocationPhotos.size < 4) {
-                    Log.v("file", "${File(getPathFromUri(it.mImageUri))}")
                     val drawable = decodeFile(File(getPathFromUri(it.mImageUri)))
                     drawable!!.setBounds(0, 0, width, height)
                     journalLocationPhotos.add(drawable)
@@ -393,10 +399,8 @@ class JournalActivity : AppCompatActivity(),
             val geoDegree = GeoDegree(exif)
             val exifLat = geoDegree.latitude.toDouble()
             val exifLng = geoDegree.longitude.toDouble()
-            Log.v("lat", "$exifLat")
             array.addAll(arrayOf(exifLat, exifLng))
         } catch (e: Exception) {
-            e.printStackTrace()
             array.addAll(arrayOf(lat, lng))
         }
         return array

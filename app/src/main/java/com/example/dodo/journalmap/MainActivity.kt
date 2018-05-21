@@ -45,14 +45,14 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
 
         // Set up Recycler View
         viewManager = LinearLayoutManager(this)
-        viewAdapter = MainCardAdapter(journalList, this)
+        viewAdapter = MainCardAdapter(journalList)
         recyclerView = findViewById<RecyclerView>(R.id.activity_main_recycler_view).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
             adapter = viewAdapter
         }
         // Set up Drag and Drop
-        val callback = SimpleItemTouchHelperCallback(viewAdapter as MainCardAdapter)
+        val callback = SimpleItemTouchHelperCallback(viewAdapter as MainCardAdapter, this)
         mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper.attachToRecyclerView(recyclerView)
         updateJournal()
@@ -68,15 +68,6 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "wait", Toast.LENGTH_LONG).show()
             }
-        }
-
-        // Set up Floating Button for Delete
-        activity_main_floating_action_button_delete.setOnClickListener{
-            val journals = journalQuery.find()
-            journals.forEach {
-                deleteJournal(it)
-            }
-            updateJournal()
         }
     }
 
@@ -113,12 +104,8 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
     }
 
     private fun updateJournal() {
-        Log.v("check", "updateJournal Working")
         val journals = journalQuery.find()
         journals.sortBy { it.mLoc }
-        //var tmp = ""
-        //journals.forEach { tmp += "$it " }
-        //Log.v("journals", tmp)
         if (journalList.size != 0) {
             journalList.clear()
         }
