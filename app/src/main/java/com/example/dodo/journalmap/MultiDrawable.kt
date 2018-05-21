@@ -21,25 +21,25 @@ class MultiDrawable(drawables: List<Drawable>) : Drawable() {
 
         if (mDrawables.size == 2 || mDrawables.size == 3) {
             canvas?.save()
-            canvas?.clipRect(0, 0, width/2, height)
-            canvas?.translate(-width / 4f , 0f)
+            canvas?.clipRect(0, 0, width / 2, height)
+            canvas?.translate(-width / 4f, 0f)
             mDrawables[0].draw(canvas)
             canvas?.restore()
         }
 
         if (mDrawables.size == 2) {
             canvas?.save()
-            canvas?.clipRect(width/2, 0, width, height)
-            canvas?.translate(width/4f, 0f)
+            canvas?.clipRect(width / 2, 0, width, height)
+            canvas?.translate(width / 4f, 0f)
             mDrawables[1].draw(canvas)
             canvas?.restore()
         } else {
             canvas?.save()
             canvas?.scale(.5f, .5f)
-            canvas?.translate(width/1.0f, 0f)
+            canvas?.translate(width / 1.0f, 0f)
             mDrawables[1].draw(canvas)
 
-            canvas?.translate(0f, height/1.0f)
+            canvas?.translate(0f, height / 1.0f)
             mDrawables[2].draw(canvas)
             canvas?.restore()
         }
@@ -49,7 +49,7 @@ class MultiDrawable(drawables: List<Drawable>) : Drawable() {
             canvas?.scale(.5f, .5f)
             mDrawables[0].draw(canvas)
 
-            canvas?.translate(0f, height/1.0f)
+            canvas?.translate(0f, height / 1.0f)
             mDrawables[3].draw(canvas)
             canvas?.restore()
         }

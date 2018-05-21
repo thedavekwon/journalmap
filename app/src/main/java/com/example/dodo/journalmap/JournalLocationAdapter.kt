@@ -27,10 +27,8 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
             Log.v("latlng", "latlng ${getItem(position).mLat}, ${getItem(position).mLng}")
         }
 
+        //TODO(editor dialog)
         view?.setOnLongClickListener {
-            (context as JournalActivity).openEditor(getItem(position).id)
-            Log.v("openEditor", "Opened textEditor")
-            Log.v("editorID", "${getItem(position).id}")
             true
         }
 
@@ -40,7 +38,7 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         val contextView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Context)
         val dateView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Date)
 
-        Picasso.with(context).load(getItem(position).mImageUri).resize(360,240).centerCrop().into(imageView)
+        Picasso.with(context).load(getItem(position).mImageUri).resize(360, 240).centerCrop().into(imageView)
         nameView?.text = getItem(position).mName
         contextView?.text = getItem(position).mText
         dateView?.text = getItem(position).mDate
@@ -49,6 +47,4 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
 
         return view!!
     }
-
-
 }

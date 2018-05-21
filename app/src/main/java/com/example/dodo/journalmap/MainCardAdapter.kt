@@ -36,18 +36,18 @@ val TAG = "GestureListener"
 
 class MainCardAdapter(val journalList: ArrayList<Journal>) :
         RecyclerView.Adapter<MainCardAdapter.ItemViewHolder>(), ItemTouchHelperAdapter {
-        class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemTouchHelperViewHolder {
-            var imageView: ImageView = itemView.findViewById(R.id.activity_main_card_view_image)
-            var textTitleView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_title)
-            var textDateView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_date)
-            override fun onItemSelected() {
-                itemView.setBackgroundColor(Color.LTGRAY)
-            }
-
-            override fun onItemClear() {
-                itemView.setBackgroundColor(0)
-            }
+    class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), ItemTouchHelperViewHolder {
+        var imageView: ImageView = itemView.findViewById(R.id.activity_main_card_view_image)
+        var textTitleView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_title)
+        var textDateView: TextView = itemView.findViewById(R.id.activity_main_card_view_text_date)
+        override fun onItemSelected() {
+            itemView.setBackgroundColor(Color.LTGRAY)
         }
+
+        override fun onItemClear() {
+            itemView.setBackgroundColor(0)
+        }
+    }
 
     private lateinit var context: Context
     private lateinit var journalQuery: Query<Journal>
@@ -66,7 +66,7 @@ class MainCardAdapter(val journalList: ArrayList<Journal>) :
         holder.imageView.setImageURI(Uri.fromFile(File(journalList[position].mImageUri)))
         holder.textTitleView.text = journalList[position].mTitle
         holder.textDateView.text = journalList[position].mDate
-        holder.imageView.setOnClickListener{
+        holder.imageView.setOnClickListener {
             val journalIntent = Intent(it.context, JournalActivity::class.java)
             journalIntent.putExtra("latitude", journalList[position].mLat)
             journalIntent.putExtra("longitude", journalList[position].mLng)

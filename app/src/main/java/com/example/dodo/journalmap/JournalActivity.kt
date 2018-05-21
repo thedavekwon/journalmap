@@ -93,7 +93,7 @@ class JournalActivity : AppCompatActivity(),
         journalQuery = journalBox.query().build()
         journalLocationQuery = journalLocationBox.query().build()
 
-        mMarkerDragListener = object: GoogleMap.OnMarkerDragListener {
+        mMarkerDragListener = object : GoogleMap.OnMarkerDragListener {
             private lateinit var journalLocation: JournalLocation
             private lateinit var changed: LatLng
 
@@ -108,16 +108,17 @@ class JournalActivity : AppCompatActivity(),
                 Log.v("journalLocationBox Size", "${journalLocationQuery.find().size}")
                 updateJournalPath()
             }
+
             //TODO(More Efficient Method)
             override fun onMarkerDragStart(p0: Marker?) {
                 Log.v("marker", "${p0?.position?.latitude}, ${p0?.position?.longitude}")
                 val found = journalLocationBox.query()
                         .between(JournalLocation_.mLat,
-                                p0!!.position.latitude-0.01,
-                                p0.position.latitude+0.01)
+                                p0!!.position.latitude - 0.01,
+                                p0.position.latitude + 0.01)
                         .between(JournalLocation_.mLng,
-                                p0.position.longitude-0.01,
-                                p0.position.longitude+0.01)
+                                p0.position.longitude - 0.01,
+                                p0.position.longitude + 0.01)
                         .build()
                         .find()
                 if (found.isEmpty()) return
@@ -187,12 +188,12 @@ class JournalActivity : AppCompatActivity(),
                 }
                 updateJournalLocation()
                 updateJournalPath()
-            } catch (e : Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-        if(requestCode == EDITOR_CODE){
-            if(resultCode == Activity.RESULT_OK) {
+        if (requestCode == EDITOR_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
                 Log.v("edited", "edited")
                 updateJournalLocation()
                 updateJournalPath()
@@ -279,7 +280,7 @@ class JournalActivity : AppCompatActivity(),
         AlertDialog.Builder(this)
                 .setMessage("Permission for Storage")
                 .setPositiveButton("allow", { _, _ -> request.proceed() })
-                .setNegativeButton("deny", { _, _ -> request.cancel()})
+                .setNegativeButton("deny", { _, _ -> request.cancel() })
                 .show()
     }
 
@@ -317,10 +318,10 @@ class JournalActivity : AppCompatActivity(),
         val size = journalLocationList.size
         val start = LatLng(journalLocationList[0].mLat, journalLocationList[0].mLng)
         val locList = ArrayList<LatLng>()
-        for (i in 1 until size-1) {
+        for (i in 1 until size - 1) {
             locList.add(LatLng(journalLocationList[i].mLat, journalLocationList[i].mLng))
         }
-        val last = LatLng(journalLocationList[size-1].mLat, journalLocationList[size-1].mLng)
+        val last = LatLng(journalLocationList[size - 1].mLat, journalLocationList[size - 1].mLng)
 
         Log.v("updateJournalPath", "$start, $locList, $last")
 
@@ -406,11 +407,11 @@ class JournalActivity : AppCompatActivity(),
     }
 
     fun moveMapCamera(latLng: LatLng) {
-        Log.v("marker to move", "${latLng.latitude}, ${latLng.longitude}" )
+        Log.v("marker to move", "${latLng.latitude}, ${latLng.longitude}")
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
-    private fun moveToDefaultLocation(){
+    private fun moveToDefaultLocation() {
         moveMapCamera(LatLng(lat, lng))
     }
 
@@ -497,8 +498,8 @@ class JournalActivity : AppCompatActivity(),
             val REQUIRED_SIZE = 320
             var scale = 2
 
-            while(options.outWidth / scale / 2 >= REQUIRED_SIZE &&
-                    options.outHeight / scale /2 >= REQUIRED_SIZE) {
+            while (options.outWidth / scale / 2 >= REQUIRED_SIZE &&
+                    options.outHeight / scale / 2 >= REQUIRED_SIZE) {
                 scale *= 2
             }
 
@@ -506,7 +507,7 @@ class JournalActivity : AppCompatActivity(),
             options2.inSampleSize = scale
             val bitmap = BitmapFactory.decodeStream(FileInputStream(f), null, options2)
             return BitmapDrawable(resources, bitmap)
-        } catch(e : Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return null
