@@ -16,6 +16,7 @@ import com.google.maps.android.clustering.ClusterManager
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.media.ExifInterface
@@ -26,6 +27,7 @@ import com.akexorcist.googledirection.DirectionCallback
 import com.akexorcist.googledirection.GoogleDirection
 import com.akexorcist.googledirection.constant.TransportMode
 import com.akexorcist.googledirection.model.Direction
+import com.akexorcist.googledirection.util.DirectionConverter
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -57,36 +59,75 @@ class JournalActivity : AppCompatActivity(),
     private var lng = 0.0
     private var name = ""
     private var mId: Long = 0
+    private var drawn: Boolean = false
 
     private lateinit var mMap: GoogleMap
+    private lateinit var mMarkerDragListener: GoogleMap.OnMarkerDragListener
     private lateinit var mAdapter: JournalLocationAdapter
     private lateinit var mapFragment: SupportMapFragment
 
     private lateinit var journalQuery: Query<Journal>
+    private lateinit var journalLocationQuery: Query<JournalLocation>
     private lateinit var journalBox: Box<Journal>
     private lateinit var journalLocationBox: Box<JournalLocation>
 
     private lateinit var mClusterManager: ClusterManager<JournalLocation>
 
+    private var polylineOptionList: ArrayList<Polyline> = ArrayList()
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Set up for View
         super.onCreate(savedInstanceState)
 
+        setContentView(R.layout.activity_journal)
+
         lat = intent.getDoubleExtra("latitude", 0.0)
         lng = intent.getDoubleExtra("longitude", 0.0)
         name = intent.getStringExtra("name")
         mId = intent.getLongExtra("id", 0)
 
-        setContentView(R.layout.activity_journal)
-        mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
         // Set up for DB
         journalBox = (application as App).boxStore.boxFor<Journal>()
         journalLocationBox = (application as App).boxStore.boxFor<JournalLocation>()
         journalQuery = journalBox.query().build()
+        journalLocationQuery = journalLocationBox.query().build()
+
+        mMarkerDragListener = object: GoogleMap.OnMarkerDragListener {
+            private lateinit var journalLocation: JournalLocation
+            private lateinit var changed: LatLng
+
+            override fun onMarkerDrag(p0: Marker?) {
+            }
+
+            override fun onMarkerDragEnd(p0: Marker?) {
+                changed = p0!!.position
+                journalLocation.mLat = changed.latitude
+                journalLocation.mLng = changed.longitude
+                journalLocationBox.put(journalLocation)
+                Log.v("journalLocationBox Size", "${journalLocationQuery.find().size}")
+                updateJournalPath()
+            }
+            //TODO(More Efficient Method)
+            override fun onMarkerDragStart(p0: Marker?) {
+                Log.v("marker", "${p0?.position?.latitude}, ${p0?.position?.longitude}")
+                val found = journalLocationBox.query()
+                        .between(JournalLocation_.mLat,
+                                p0!!.position.latitude-0.01,
+                                p0.position.latitude+0.01)
+                        .between(JournalLocation_.mLng,
+                                p0.position.longitude-0.01,
+                                p0.position.longitude+0.01)
+                        .build()
+                        .find()
+                if (found.isEmpty()) return
+                journalLocation = found[0]
+            }
+        }
+
+
+        mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
 
         // Set up for List View
         mAdapter = JournalLocationAdapter(this@JournalActivity, R.layout.activity_journal_list_view, journalLocationList)
@@ -101,6 +142,25 @@ class JournalActivity : AppCompatActivity(),
         activity_journal_home_button.setOnClickListener {
             moveToDefaultLocation()
         }
+    }
+
+    override fun onDestroy() {
+        val builder = LatLngBounds.builder()
+        journalLocationList.forEach { builder.include(LatLng(it.mLat, it.mLng)) }
+
+        val bounds = builder.build()
+
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        //Log.v("stored", "${journalBox.get(mId).mImageUri}")
+        val callback = GoogleMap.SnapshotReadyCallback {
+            FileUtils.changeImage(File(journalBox.get(mId).mImageUri), it)
+        }
+        mMap.snapshot(callback)
+        super.onDestroy()
     }
 
 
@@ -122,6 +182,7 @@ class JournalActivity : AppCompatActivity(),
                             mDate = "")
                     val journal = journalBox.get(mId)
                     journal.mJournalLocations?.add(journalLocation)
+                    journalLocationBox.put(journalLocation)
                     journalBox.put(journal)
                 }
                 updateJournalLocation()
@@ -158,6 +219,7 @@ class JournalActivity : AppCompatActivity(),
         mMap.setOnCameraIdleListener(mClusterManager)
         mMap.setOnMarkerClickListener(mClusterManager)
         mMap.setOnInfoWindowClickListener(mClusterManager)
+        mMap.setOnMarkerDragListener(mMarkerDragListener)
 
         mClusterManager.setOnClusterClickListener(this)
         mClusterManager.setOnClusterInfoWindowClickListener(this)
@@ -246,8 +308,12 @@ class JournalActivity : AppCompatActivity(),
     }
 
     private fun updateJournalPath() {
+        Log.v("updateJournalPath", "executed")
         if (journalLocationList.size < 2) return
-        if (checkNoDifference()) return
+        if (drawn) {
+            polylineOptionList.forEach { it.remove() }
+        }
+        //if (checkNoDifference()) return
         val size = journalLocationList.size
         val start = LatLng(journalLocationList[0].mLat, journalLocationList[0].mLng)
         val locList = ArrayList<LatLng>()
@@ -256,22 +322,74 @@ class JournalActivity : AppCompatActivity(),
         }
         val last = LatLng(journalLocationList[size-1].mLat, journalLocationList[size-1].mLng)
 
-        Log.v("path", "$start, $locList, $last")
+        Log.v("updateJournalPath", "$start, $locList, $last")
 
-        GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
-                .from(start)
-                .and(locList)
-                .to(last)
-                .transportMode(TransportMode.WALKING)
-                .execute(object: DirectionCallback{
-                    override fun onDirectionFailure(t: Throwable?) {
-                        Toast.makeText(this@JournalActivity, "failed", Toast.LENGTH_SHORT)
-                    }
+        if (locList.isEmpty()) {
+            GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
+                    .from(start)
+                    .to(last)
+                    .transportMode(TransportMode.WALKING)
+                    .execute(object : DirectionCallback {
+                        override fun onDirectionFailure(t: Throwable?) {
+                            Toast.makeText(this@JournalActivity, "failed", Toast.LENGTH_SHORT)
+                            Log.v("updateJournalPath", "failed")
+                        }
 
-                    override fun onDirectionSuccess(direction: Direction?, rawBody: String?) {
-                        Toast.makeText(this@JournalActivity, "succeed", Toast.LENGTH_SHORT)
-                    }
-                })
+                        override fun onDirectionSuccess(direction: Direction?, rawBody: String?) {
+                            Log.v("updateJournalPath", "succeed")
+                            try {
+                                Log.v("updateJournalPath", "$direction")
+                                val stepList = direction!!.routeList[0].legList[0].stepList
+                                val curPolyline = DirectionConverter.createTransitPolyline(
+                                        applicationContext,
+                                        stepList,
+                                        5,
+                                        Color.BLUE,
+                                        3,
+                                        Color.BLUE)
+                                curPolyline.forEach {
+                                    val poly = mMap.addPolyline(it)
+                                    polylineOptionList.add(poly)
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    })
+        } else {
+            GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
+                    .from(start)
+                    .and(locList)
+                    .to(last)
+                    .transportMode(TransportMode.WALKING)
+                    .execute(object : DirectionCallback {
+                        override fun onDirectionFailure(t: Throwable?) {
+                            Toast.makeText(this@JournalActivity, "failed", Toast.LENGTH_SHORT)
+                            Log.v("updateJournalPath", "failed")
+                        }
+
+                        override fun onDirectionSuccess(direction: Direction?, rawBody: String?) {
+                            Log.v("updateJournalPath", "succeed")
+                            try {
+                                Log.v("updateJournalPath", "$direction")
+                                val stepList = direction!!.routeList[0].legList[0].stepList
+                                val curPolyline = DirectionConverter.createTransitPolyline(
+                                        applicationContext,
+                                        stepList,
+                                        5,
+                                        Color.BLUE,
+                                        3,
+                                        Color.BLUE)
+                                curPolyline.forEach {
+                                    val poly = mMap.addPolyline(it)
+                                    polylineOptionList.add(poly)
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    })
+        }
     }
 
     private fun checkNoDifference(): Boolean {
@@ -288,6 +406,7 @@ class JournalActivity : AppCompatActivity(),
     }
 
     fun moveMapCamera(latLng: LatLng) {
+        Log.v("marker to move", "${latLng.latitude}, ${latLng.longitude}" )
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng))
     }
 
@@ -333,6 +452,7 @@ class JournalActivity : AppCompatActivity(),
             mImageView.setImageDrawable(decodeFile(File(getPathFromUri(item!!.mImageUri))))
             val icon = mIconGenerator.makeIcon()
             markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))?.title(item.mName)
+            markerOptions?.draggable(true)
         }
 
         override fun onBeforeClusterRendered(cluster: Cluster<JournalLocation>?, markerOptions: MarkerOptions?) {
@@ -349,7 +469,6 @@ class JournalActivity : AppCompatActivity(),
             }
             val multiDrawable = MultiDrawable(journalLocationPhotos)
             multiDrawable.setBounds(0, 0, width, height)
-
             mClusterImageView.setImageDrawable(multiDrawable)
             val icon = mClusterIconGenerator.makeIcon(cluster.size.toString())
             markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(icon))
@@ -404,11 +523,5 @@ class JournalActivity : AppCompatActivity(),
             array.addAll(arrayOf(lat, lng))
         }
         return array
-    }
-
-    fun openEditor(id : Long) {
-        val editorIntent = Intent(this, EditorActivity::class.java)
-        editorIntent.putExtra("id", id)
-        startActivityForResult(editorIntent, EDITOR_CODE)
     }
 }

@@ -163,6 +163,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                 },
                 Response.ErrorListener {
                     Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+                    mProgressBar.dismissWithAnimation()
                 }
         )
     }
