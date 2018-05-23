@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="grid_expected_size">120dp</dimen>
-    <dimen name="custom_profile_image">50dp</dimen>
-    <dimen name="custom_profile_padding">2dp</dimen>
+    <dimen name="custom_profile_image">60dp</dimen>
+    <dimen name="custom_profile_padding">5dp</dimen>
 </resources>

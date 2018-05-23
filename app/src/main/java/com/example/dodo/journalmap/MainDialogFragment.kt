@@ -67,7 +67,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         mProgressBar = SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
         mProgressBar.progressHelper.barColor = Color.parseColor("#A5DC86")
         mProgressBar.titleText = "Loading"
-        mProgressBar.setCancelable(false)
+        mProgressBar.setCancelable(true)
 
         // Set up DB
         journalBox = (activity?.application as App).boxStore.boxFor<Journal>()

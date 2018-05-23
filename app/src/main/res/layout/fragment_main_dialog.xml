@@ -14,7 +14,7 @@
 
         <EditText
             android:id="@+id/fragment_main_dialog_city_name"
-            android:layout_width="230dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="City Name"
             android:padding="10dp"
@@ -23,10 +23,10 @@
 
         <Button
             android:id="@+id/fragment_main_dialog_city_search"
-            android:layout_width="70dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="SEARCH"
+            android:text="Search"
             app:layout_constraintRight_toRightOf="parent" />
 
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -47,6 +47,7 @@
             android:layout_height="wrap_content"
             android:hint="Enter Journal Title"
             app:layout_constraintLeft_toLeftOf="parent"
+            android:padding="10dp"
             android:textSize="20sp"
             app:layout_constraintTop_toBottomOf="@+id/fragment_main_dialog_city_map"
             app:layout_constraintBottom_toBottomOf="parent" />
@@ -56,6 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Save"
+            android:padding="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/fragment_main_dialog_city_map"
             app:layout_constraintRight_toRightOf="parent" />

@@ -53,4 +53,12 @@ dependencies {
     implementation 'com.github.nisrulz:sensey:1.8.0'
     implementation 'com.akexorcist:googledirectionlibrary:1.1.1'
     implementation 'com.github.thomper:sweet-alert-dialog:v1.4.0'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.22.5"
+    implementation 'com.sothree.slidinguppanel:library:3.4.0'
+    implementation 'com.wdullaer:materialdatetimepicker:3.6.0'
+}
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
 }
