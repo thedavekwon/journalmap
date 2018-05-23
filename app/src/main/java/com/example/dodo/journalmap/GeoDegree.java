@@ -28,7 +28,9 @@ public class GeoDegree {
                 longitude = 0 - convertToDegree(attrLONGITUDE);
             }
         }
-    };
+    }
+
+    ;
 
     private Float convertToDegree(String stringDMS) {
         Float result = null;
@@ -53,7 +55,9 @@ public class GeoDegree {
 
         return result;
 
-    };
+    }
+
+    ;
 
     public boolean isValid() {
         return valid;

@@ -16,14 +16,6 @@
         map:cameraZoom="14"
         tools:context=".MapsActivity" />
 
-    <Button
-        android:id="@+id/activity_journal_home_button"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:text="H"
-        app:layout_constraintBottom_toBottomOf="@+id/activity_journal_map"
-        app:layout_constraintRight_toRightOf="@+id/activity_journal_map" />
-
     <ListView
         android:id="@+id/activity_journal_list_view_itself"
         android:layout_width="match_parent"

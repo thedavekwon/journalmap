@@ -1,0 +1,99 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:2793273101909755451",
+      "lastPropertyId": "8:4652658455361866319",
+      "name": "Journal",
+      "properties": [
+        {
+          "id": "1:5106552476796324662",
+          "name": "id"
+        },
+        {
+          "id": "2:5733112592324755971",
+          "name": "mTitle"
+        },
+        {
+          "id": "3:4989714144509618758",
+          "name": "mDate"
+        },
+        {
+          "id": "4:6822645710473378957",
+          "name": "mLat"
+        },
+        {
+          "id": "5:2185952933339495407",
+          "name": "mLng"
+        },
+        {
+          "id": "6:9101088999096945621",
+          "name": "mImageUri"
+        },
+        {
+          "id": "7:8443602566654392290",
+          "name": "mName"
+        },
+        {
+          "id": "8:4652658455361866319",
+          "name": "mLoc"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:3302270600038584197",
+      "lastPropertyId": "8:4612017157339579049",
+      "name": "JournalLocation",
+      "properties": [
+        {
+          "id": "1:4831727749100530359",
+          "name": "id"
+        },
+        {
+          "id": "2:6033388324438803573",
+          "name": "mLng"
+        },
+        {
+          "id": "3:4816284315965246216",
+          "name": "mLat"
+        },
+        {
+          "id": "4:6986589981776433016",
+          "name": "mImageUri"
+        },
+        {
+          "id": "5:3474397974118624759",
+          "name": "mName"
+        },
+        {
+          "id": "6:3973917251840056971",
+          "name": "mText"
+        },
+        {
+          "id": "7:2892394373034977438",
+          "name": "mDate"
+        },
+        {
+          "id": "8:4612017157339579049",
+          "indexId": "1:5434215012786157181",
+          "name": "journalId"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "2:3302270600038584197",
+  "lastIndexId": "1:5434215012786157181",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 4,
+  "modelVersionParserMinimum": 4,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
