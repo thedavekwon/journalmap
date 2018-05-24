@@ -102,6 +102,7 @@ class JournalActivity : AppCompatActivity(),
             private lateinit var changed: LatLng
 
             override fun onMarkerDrag(p0: Marker?) {
+                return
             }
 
             override fun onMarkerDragEnd(p0: Marker?) {
@@ -110,24 +111,11 @@ class JournalActivity : AppCompatActivity(),
                 journalLocation.mLat = changed.latitude
                 journalLocation.mLng = changed.longitude
                 journalLocationBox.put(journalLocation)
-                Log.v("journalLocationBox Size", "${journalLocationQuery.find().size}")
                 updateJournalPath()
             }
 
-            //TODO(More Efficient Method)
             override fun onMarkerDragStart(p0: Marker?) {
-                //Log.v("marker", "${p0?.position?.latitude}, ${p0?.position?.longitude}")
-                //val found = journalLocationBox.query()
-                //        .between(JournalLocation_.mLat,
-                //                p0!!.position.latitude - 0.03,
-                //                p0.position.latitude + 0.03)
-                //        .between(JournalLocation_.mLng,
-                //                p0.position.longitude - 0.03,
-                //                p0.position.longitude + 0.03)
-                //        .build()
-                //        .find()
-                //if (found.isEmpty()) return
-                //journalLocation = found[0]
+                return
             }
         }
 
@@ -140,7 +128,10 @@ class JournalActivity : AppCompatActivity(),
         activity_journal_list_view_panel.adapter = mAdapter
 
         activity_journal_list_view_panel.setOnItemClickListener { parent, view, position, id ->
-            onBackPressed()
+            if (mLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED ||
+                    mLayout.panelState == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                mLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+            }
             moveMapCamera(LatLng(journalLocationList[position].mLat, journalLocationList[position].mLng))
         }
 
@@ -177,9 +168,13 @@ class JournalActivity : AppCompatActivity(),
     private fun updateCardPhoto() {
         val builder = LatLngBounds.builder()
         Log.v("journalLocationList", "$journalLocationList")
-        journalLocationList.forEach { builder.include(LatLng(it.mLat, it.mLng)) }
-        val bounds = builder.build()
+        journalLocationList.forEach {
+            boundCreate(LatLng(it.mLat, it.mLng)).forEach {
+                builder.include(it)
+            }
+        }
 
+        val bounds = builder.build()
         val journal = journalBox.get(mId).also {
             it.mLat = bounds.center.latitude
             it.mLng = bounds.center.longitude
@@ -277,10 +272,13 @@ class JournalActivity : AppCompatActivity(),
 
     override fun onClusterClick(cluster: Cluster<JournalLocation>?): Boolean {
         val firstName = cluster!!.items.iterator().next().mName
-        Toast.makeText(this, "${cluster.size} including $firstName", Toast.LENGTH_SHORT).show()
 
         val builder = LatLngBounds.builder()
-        cluster.items.forEach { builder.include(it.position) }
+        cluster.items.forEach {
+            boundCreate(it.position).forEach {
+                builder.include(it)
+            }
+        }
 
         val bounds = builder.build()
 
@@ -291,6 +289,15 @@ class JournalActivity : AppCompatActivity(),
         }
 
         return true
+    }
+
+    private fun boundCreate(latLng: LatLng):Array<LatLng> {
+        return arrayOf(
+                LatLng(latLng.latitude-0.008, latLng.longitude-0.008),
+                LatLng(latLng.latitude-0.008, latLng.longitude+0.008),
+                LatLng(latLng.latitude+0.008, latLng.longitude-0.008),
+                LatLng(latLng.latitude+0.008, latLng.longitude+0.008)
+        )
     }
 
     override fun onClusterInfoWindowClick(cluster: Cluster<JournalLocation>?) {

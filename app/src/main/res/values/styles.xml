@@ -13,4 +13,5 @@
         <item name="android:textColor">#ffeeeeee</item>
     </style>
     <style name="amu_Bubble.TextAppearance.Dark" parent="android:TextAppearance.Medium"/>
+
 </resources>
