@@ -53,8 +53,12 @@ class EditDialogFragment: DialogFragment() {
             val now = Calendar.getInstance()
             val datePickerDialog = DatePickerDialog(
                     activity,
-                    DatePickerDialog.OnDateSetListener { v, y, m, d ->
-                        dateText.text = y.toString() + "-"+ m.toString() + "-" + d.toString()
+                    DatePickerDialog.OnDateSetListener { _, y, m, d ->
+                        var mStr = ""
+                        var dStr = ""
+                        if (m+1 < 10) { mStr = "0${m+1}"} else { mStr = "${m+1}" }
+                        if (d < 10) { dStr = "0$d"} else { dStr = "$d" }
+                        dateText.text = y.toString() + "-"+ mStr + "-" + dStr
                     },
                     now.get(Calendar.YEAR),
                     now.get(Calendar.MONTH),
@@ -70,6 +74,7 @@ class EditDialogFragment: DialogFragment() {
             journalLocationBox.put(journalLocation)
 
             (activity as JournalActivity).updateJournalLocation()
+            (activity as JournalActivity).updateCardPhoto()
             dismiss()
         }
 

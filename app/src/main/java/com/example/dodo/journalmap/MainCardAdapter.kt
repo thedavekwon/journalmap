@@ -2,9 +2,7 @@ package com.example.dodo.journalmap
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.support.v7.widget.CardView
 import android.support.v7.widget.RecyclerView
 import android.widget.ImageView
@@ -13,14 +11,9 @@ import android.util.Log
 import android.view.*
 import java.util.*
 import com.squareup.picasso.Picasso
-import com.squareup.picasso.Target
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import java.io.File
 
 
@@ -73,8 +66,7 @@ class MainCardAdapter(val journalList: ArrayList<Journal>) :
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         Picasso.with(pcontext)
                 .load(File(journalList[position].mImageUri))
-                .resize(360, 240)
-                .centerCrop()
+                .fit()
                 .into(holder.imageView)
         holder.textTitleView.text = journalList[position].mTitle
         holder.textDateView.text = journalList[position].mDate

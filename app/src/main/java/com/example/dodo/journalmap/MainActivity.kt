@@ -2,7 +2,6 @@ package com.example.dodo.journalmap
 
 import android.app.Activity
 import android.content.Intent
-import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
@@ -12,7 +11,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.widget.Toast
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -21,6 +19,7 @@ import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
 import io.objectbox.query.Query
 import java.io.File
+import java.text.FieldPosition
 
 class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStartDragListener {
 
@@ -58,12 +57,19 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
             layoutManager = viewManager
             adapter = viewAdapter
         }
+
         // Set up Drag and Drop
         val callback = SimpleItemTouchHelperCallback(viewAdapter as MainCardAdapter, this)
         mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper.attachToRecyclerView(recyclerView)
         updateJournal()
 
+        // Set up for Swipe to Refresh
+        activity_main_swipe_refresh.setOnRefreshListener{
+            updateJournal()
+            for (i in 0 until journalList.size) { viewAdapter.notifyItemChanged(i) }
+            activity_main_swipe_refresh.isRefreshing = false
+        }
 
         // Set up Floating Button for Add
         activity_main_floating_action_button.setOnClickListener {
@@ -84,8 +90,10 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
         if (requestCode == JOURNAL_ACTIVITY && resultCode == Activity.RESULT_OK) {
             Log.v("edited", "edited")
             updateJournal()
+//            val mId = data?.getLongExtra("mId", 0)
+//            Log.v("journallistindex", "journallistindex ${journalList.indexOf(journalBox.get(mId!!))}")
+//            viewAdapter.notifyItemChanged(journalList.indexOf(journalBox.get(mId!!)))
         }
-        viewAdapter.notifyDataSetChanged()
     }
 
     // Add Action Buttons(activity_main_menu)
@@ -120,6 +128,12 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
         if (journalList.size != 0) { journalList.clear() }
         journalList.addAll(journals)
         viewAdapter.notifyDataSetChanged()
+    }
+
+    fun updateSingleJournal(mId: Long) {
+        viewAdapter.notifyItemChanged(
+                journalList.indexOf(journalBox.get(mId))
+        )
     }
 
     fun deleteJournal(journal: Journal) {
