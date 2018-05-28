@@ -124,6 +124,7 @@ class JournalActivity : AppCompatActivity(),
                 journalLocationBox.put(journalLocation)
                 updateJournalLocation()
                 updateJournalPath()
+                updateCardPhoto(false)
             }
 
             override fun onMarkerDragStart(p0: Marker?) {
@@ -217,7 +218,7 @@ class JournalActivity : AppCompatActivity(),
         forceUpdateJournalLocation()
     }
 
-    fun updateCardPhoto() {
+    fun updateCardPhoto(date: Boolean) {
         val builder = LatLngBounds.builder()
         var last = journalLocationList[0].mDate
         var first = journalLocationList[0].mDate
@@ -227,23 +228,32 @@ class JournalActivity : AppCompatActivity(),
             boundCreate(LatLng(it.mLat, it.mLng)).forEach {
                 builder.include(it)
             }
-            if (last < it.mDate) { last = it.mDate }
-            if (first > it.mDate) { first = it.mDate }
-            str = str + " " + it.mDate
+            if (date) {
+                if (last < it.mDate) {
+                    last = it.mDate
+                }
+                if (first > it.mDate) {
+                    first = it.mDate
+                }
+                str = str + " " + it.mDate
+            }
         }
-        Log.v("updateCardPhoto", str)
-        Log.v("updateCardPhoto", "$first, $last")
+//        Log.v("updateCardPhoto", str)
+//        Log.v("updateCardPhoto", "$first, $last")
 
         val bounds = builder.build()
         val journal = journalBox.get(mId).also {
+            Log.v("updateCardPhoto", "${it.mLat}, ${it.mLng}")
             it.mLat = bounds.center.latitude
             it.mLng = bounds.center.longitude
         }
-
-        if (first == last) {
-            journal.mDate = first
-        } else {
-            journal.mDate = "$first~$last"
+        Log.v("updateCardPhoto", "${journal.mLat}, ${journal.mLng}")
+        if (date) {
+            if (first == last) {
+                journal.mDate = first
+            } else {
+                journal.mDate = "$first~$last"
+            }
         }
 
         journalBox.put(journal)
@@ -284,7 +294,7 @@ class JournalActivity : AppCompatActivity(),
                     Log.v("size", "size ${journalLocationQuery.find().size}")
                 }
                 updateJournalLocation()
-                updateCardPhoto()
+                updateCardPhoto(true)
                 updateJournalPath()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -361,10 +371,10 @@ class JournalActivity : AppCompatActivity(),
 
     private fun boundCreate(latLng: LatLng):Array<LatLng> {
         return arrayOf(
-                LatLng(latLng.latitude-0.008, latLng.longitude-0.008),
-                LatLng(latLng.latitude-0.008, latLng.longitude+0.008),
-                LatLng(latLng.latitude+0.008, latLng.longitude-0.008),
-                LatLng(latLng.latitude+0.008, latLng.longitude+0.008)
+                LatLng(latLng.latitude-0.005, latLng.longitude-0.005),
+                LatLng(latLng.latitude-0.005, latLng.longitude+0.005),
+                LatLng(latLng.latitude+0.005, latLng.longitude-0.005),
+                LatLng(latLng.latitude+0.005, latLng.longitude+0.005)
         )
     }
 
@@ -377,7 +387,7 @@ class JournalActivity : AppCompatActivity(),
     }
 
     override fun onClusterItemClick(p0: JournalLocation?): Boolean {
-        return false
+        return true
     }
 
     @NeedsPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)

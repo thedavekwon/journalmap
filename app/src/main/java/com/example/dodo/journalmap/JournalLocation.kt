@@ -13,6 +13,7 @@ class JournalLocation(
         var mLat: Double = 0.0,
         var mImageUri: String = "",
         var mName: String = "",
+        var mHtml: String = "",
         var mText: String = "",
         var mDate: String = "") : ClusterItem {
     lateinit var journal: ToOne<Journal>

@@ -96,6 +96,11 @@ class MainActivity : AppCompatActivity(), MainDialogFragment.updateCards, OnStar
         }
     }
 
+    override fun onResume() {
+        updateJournal()
+        super.onResume()
+    }
+
     // Add Action Buttons(activity_main_menu)
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater: MenuInflater = menuInflater
