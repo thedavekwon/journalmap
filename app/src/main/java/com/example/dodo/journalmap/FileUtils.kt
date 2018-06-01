@@ -26,16 +26,6 @@ object FileUtils {
         return pictureFile.path
     }
 
-    fun changeImage(file: File, image: Bitmap) {
-        try {
-            val fos = FileOutputStream(file)
-            image.compress(Bitmap.CompressFormat.PNG, 100, fos)
-            fos.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
     private fun getOutputMediaFile(context: Context?): File? {
         val mediaStorageDir = File(Environment.getExternalStorageDirectory().path
                 + "/Android/data/"

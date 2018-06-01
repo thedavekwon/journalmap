@@ -67,6 +67,7 @@ class MainCardAdapter(val journalList: ArrayList<Journal>) :
         Picasso.with(pcontext)
                 .load(File(journalList[position].mImageUri))
                 .fit()
+                .centerCrop()
                 .into(holder.imageView)
         holder.textTitleView.text = journalList[position].mTitle
         holder.textDateView.text = journalList[position].mDate

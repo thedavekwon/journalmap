@@ -29,6 +29,7 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         Picasso.with(context)
                 .load(getItem(position).mImageUri)
                 .fit()
+                .centerCrop()
                 .into(imageView)
         nameView?.text = getItem(position).mName
         contextView?.text = getItem(position).mText

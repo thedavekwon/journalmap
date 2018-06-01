@@ -8,7 +8,8 @@
     android:layout_width="match_parent"
     android:layout_height="200dp"
     card_view:cardCornerRadius="4dp"
-    android:layout_margin="14dp">
+    android:layout_margin="14dp"
+    android:background="@color/cardview_light_background">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -19,7 +20,7 @@
                     android:id="@+id/activity_main_card_view_image"
                     android:layout_width="match_parent"
                     android:scaleType="centerCrop"
-                    android:layout_height="160dp" />
+                    android:layout_height="167dp" />
 
                 <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
@@ -27,17 +28,17 @@
                     <TextView
                         android:id="@+id/activity_main_card_view_text_title"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
+                        android:layout_height="33dp"
                         android:gravity="center_vertical"
-                        android:layout_margin="5dp"
+                        android:layout_margin="3dp"
                         android:text="sample_title"
-                        android:textSize="20dp"
+                        android:textSize="18dp"
                         app:layout_constraintLeft_toLeftOf="parent"/>
                     <TextView
                         android:id="@+id/activity_main_card_view_text_date"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:layout_margin="5dp"
+                        android:layout_height="33dp"
+                        android:layout_margin="3dp"
                         android:text="sample_date"
                         android:textSize="12dp"
                         android:gravity="center_vertical"

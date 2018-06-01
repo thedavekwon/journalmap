@@ -166,7 +166,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         lng = jsonObject.getDouble("lng")
                         val curLoc = LatLng(lat, lng)
                         mMarker = mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 9.0f))
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 8.0f))
                         Log.v("map", "$lat, $lng")
                         mProgressBar.dismissWithAnimation()
                         mProgressBar.cancel()
