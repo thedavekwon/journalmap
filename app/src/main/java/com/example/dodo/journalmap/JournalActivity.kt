@@ -19,21 +19,18 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.media.ExifInterface
+import android.support.media.ExifInterface
 import android.net.Uri
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.BounceInterpolator
 import android.widget.ImageView
 import com.akexorcist.googledirection.DirectionCallback
 import com.akexorcist.googledirection.GoogleDirection
 import com.akexorcist.googledirection.constant.TransportMode
 import com.akexorcist.googledirection.model.Direction
 import com.akexorcist.googledirection.util.DirectionConverter
-import com.baoyz.swipemenulistview.SwipeMenu
 import com.baoyz.swipemenulistview.SwipeMenuCreator
 import com.baoyz.swipemenulistview.SwipeMenuItem
 import com.baoyz.swipemenulistview.SwipeMenuListView
@@ -41,7 +38,6 @@ import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.google.maps.android.ui.IconGenerator
-import com.sothree.slidinguppanel.ScrollableViewHelper
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.zhihu.matisse.Matisse
 import com.zhihu.matisse.MimeType
@@ -183,7 +179,7 @@ class JournalActivity : AppCompatActivity(),
             deleteItem.icon = BitmapDrawable(
                     resources,
                     Bitmap.createScaledBitmap(
-                            (resources.getDrawable(R.drawable.ic_delete) as BitmapDrawable).bitmap,
+                            (resources.getDrawable(R.drawable.ic_delete, applicationContext.theme) as BitmapDrawable).bitmap,
                             120,
                             120,
                             false
@@ -216,6 +212,7 @@ class JournalActivity : AppCompatActivity(),
         mAdapter.remove(journalLocation)
         journalLocationBox.remove(journalLocation.id)
         forceUpdateJournalLocation()
+        updateJournalPath()
     }
 
     fun updateCardPhoto(date: Boolean) {
@@ -277,7 +274,7 @@ class JournalActivity : AppCompatActivity(),
             try {
                 Matisse.obtainResult(data).forEach {
                     val filepath = getPathFromUri(it.toString())
-                    val exif = ExifInterface(filepath)
+                    val exif = ExifInterface(filepath!!)
                     val latLng = exifLatLng(exif)
                     val journalLocation = JournalLocation(
                             mLat = latLng[0],
@@ -287,7 +284,6 @@ class JournalActivity : AppCompatActivity(),
                             mText = "",
                             mDate = "")
                     journalLocationBox.put(journalLocation)
-
                     val journal = journalBox.get(mId)
                     journal.mJournalLocations?.add(journalLocation)
                     journalBox.put(journal)
@@ -642,11 +638,11 @@ class JournalActivity : AppCompatActivity(),
             options.inJustDecodeBounds = true
             BitmapFactory.decodeStream(FileInputStream(f), null, options)
 
-            val REQUIRED_SIZE = 320
+            val size = 320
             var scale = 2
 
-            while (options.outWidth / scale / 2 >= REQUIRED_SIZE &&
-                    options.outHeight / scale / 2 >= REQUIRED_SIZE) {
+            while (options.outWidth / scale / 2 >= size &&
+                    options.outHeight / scale / 2 >= size) {
                 scale *= 2
             }
 

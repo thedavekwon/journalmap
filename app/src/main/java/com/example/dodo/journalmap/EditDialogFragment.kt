@@ -68,17 +68,15 @@ class EditDialogFragment : DialogFragment() {
             val datePickerDialog = DatePickerDialog(
                     activity,
                     DatePickerDialog.OnDateSetListener { _, y, m, d ->
-                        var mStr = ""
-                        var dStr = ""
-                        if (m + 1 < 10) {
-                            mStr = "0${m + 1}"
+                        val mStr = if (m + 1 < 10) {
+                            "0${m + 1}"
                         } else {
-                            mStr = "${m + 1}"
+                            "${m + 1}"
                         }
-                        if (d < 10) {
-                            dStr = "0$d"
+                        val dStr = if (d < 10) {
+                            "0$d"
                         } else {
-                            dStr = "$d"
+                            "$d"
                         }
                         dateText.text = y.toString() + "-" + mStr + "-" + dStr
                     },

@@ -29,7 +29,7 @@ object FileUtils {
     private fun getOutputMediaFile(context: Context?): File? {
         val mediaStorageDir = File(Environment.getExternalStorageDirectory().path
                 + "/Android/data/"
-                + context?.getPackageName()
+                + context?.packageName
                 + "/Files")
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdir()) {

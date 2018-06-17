@@ -47,7 +47,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var journalBox: Box<Journal>
-    private lateinit var mProgressBar: SweetAlertDialog
     private lateinit var mMarker: Marker
 
     private var name = ""
@@ -65,13 +64,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         val queue = Volley.newRequestQueue(activity?.applicationContext)
         val titleText = rootView.findViewById<EditText>(R.id.fragment_main_dialog_city_title)
         val saveBtn = rootView.findViewById<Button>(R.id.fragment_main_dialog_city_save)
-
-        // Set up Progress Dialog
-        mProgressBar = SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
-        mProgressBar.progressHelper.barColor = Color.parseColor("#A5DC86")
-        mProgressBar.titleText = "Loading"
-        mProgressBar.setCancelable(true)
-
 
         // Set up DB
         journalBox = (activity?.application as App).boxStore.boxFor<Journal>()
@@ -151,10 +143,14 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
         val preprocessedName = loc.replace(" ", "%20")
         val url = googleMapApiUrl + preprocessedName
+        val mProgressBar = SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
+        mProgressBar.progressHelper.barColor = Color.parseColor("#A5DC86")
+        mProgressBar.titleText = "Loading"
+        mProgressBar.setCancelable(true)
+        mProgressBar.show()
         return JsonObjectRequest(Request.Method.GET, url, null,
                 Response.Listener { response ->
                     try {
-                        mProgressBar.show()
                         val jsonArray = response.getJSONArray("results")
                         var jsonObject = jsonArray.getJSONObject(0)
                         name = jsonObject.getJSONArray("address_components")
@@ -169,18 +165,14 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 8.0f))
                         Log.v("map", "$lat, $lng")
                         mProgressBar.dismissWithAnimation()
-                        mProgressBar.cancel()
                     } catch (e: Exception) {
                         Toast.makeText(activity?.applicationContext, "1", Toast.LENGTH_LONG).show()
                         mProgressBar.dismissWithAnimation()
-                        mProgressBar.cancel()
                     }
                 },
                 Response.ErrorListener {
                     Toast.makeText(activity?.applicationContext, "2", Toast.LENGTH_LONG).show()
                     mProgressBar.dismissWithAnimation()
-                    mProgressBar.cancel()
-
                 }
         )
     }
