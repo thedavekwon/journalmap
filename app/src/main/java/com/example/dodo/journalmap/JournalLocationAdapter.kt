@@ -1,8 +1,6 @@
 package com.example.dodo.journalmap
 
 import android.content.Context
-import android.content.Intent
-import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,8 +8,6 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import com.google.android.gms.maps.model.LatLng
-import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import com.squareup.picasso.Picasso
 
 
@@ -30,7 +26,11 @@ class JournalLocationAdapter(context: Context, resource: Int, objects: ArrayList
         val contextView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Context)
         val dateView = view?.findViewById<TextView>(R.id.activity_journal_list_view_Date)
 
-        Picasso.with(context).load(getItem(position).mImageUri).resize(360, 240).centerCrop().into(imageView)
+        Picasso.with(context)
+                .load(getItem(position).mImageUri)
+                .fit()
+                .centerCrop()
+                .into(imageView)
         nameView?.text = getItem(position).mName
         contextView?.text = getItem(position).mText
         dateView?.text = getItem(position).mDate

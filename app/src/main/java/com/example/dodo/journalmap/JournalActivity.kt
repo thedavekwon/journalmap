@@ -15,12 +15,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.maps.android.clustering.ClusterManager
 import permissions.dispatcher.*
 import android.content.pm.ActivityInfo
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.media.ExifInterface
+import android.support.media.ExifInterface
 import android.net.Uri
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -29,6 +31,9 @@ import com.akexorcist.googledirection.GoogleDirection
 import com.akexorcist.googledirection.constant.TransportMode
 import com.akexorcist.googledirection.model.Direction
 import com.akexorcist.googledirection.util.DirectionConverter
+import com.baoyz.swipemenulistview.SwipeMenuCreator
+import com.baoyz.swipemenulistview.SwipeMenuItem
+import com.baoyz.swipemenulistview.SwipeMenuListView
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -56,12 +61,12 @@ class JournalActivity : AppCompatActivity(),
 
     private val REQUEST_CODE_CHOOSE = 23
     private val EDITOR_CODE = 100
+    private val JOURNAL_ACTIVITY = 101
 
     private var lat = 0.0
     private var lng = 0.0
     private var name = ""
     private var mId: Long = 0
-    private var drawn: Boolean = false
 
     private lateinit var mMap: GoogleMap
     private lateinit var mMarkerDragListener: GoogleMap.OnMarkerDragListener
@@ -76,6 +81,7 @@ class JournalActivity : AppCompatActivity(),
     private lateinit var mClusterManager: ClusterManager<JournalLocation>
 
     private lateinit var mLayout: SlidingUpPanelLayout
+    private lateinit var creator: SwipeMenuCreator
 
     private var polylineOptionList: ArrayList<Polyline> = ArrayList()
     private var journalLocationList: ArrayList<JournalLocation> = ArrayList()
@@ -97,11 +103,13 @@ class JournalActivity : AppCompatActivity(),
         journalQuery = journalBox.query().build()
         journalLocationQuery = journalLocationBox.query().build()
 
+        // Set up for Marker Drag
         mMarkerDragListener = object : GoogleMap.OnMarkerDragListener {
             private lateinit var journalLocation: JournalLocation
             private lateinit var changed: LatLng
 
             override fun onMarkerDrag(p0: Marker?) {
+                return
             }
 
             override fun onMarkerDragEnd(p0: Marker?) {
@@ -110,28 +118,17 @@ class JournalActivity : AppCompatActivity(),
                 journalLocation.mLat = changed.latitude
                 journalLocation.mLng = changed.longitude
                 journalLocationBox.put(journalLocation)
-                Log.v("journalLocationBox Size", "${journalLocationQuery.find().size}")
+                updateJournalLocation()
                 updateJournalPath()
+                updateCardPhoto(false)
             }
 
-            //TODO(More Efficient Method)
             override fun onMarkerDragStart(p0: Marker?) {
-                //Log.v("marker", "${p0?.position?.latitude}, ${p0?.position?.longitude}")
-                //val found = journalLocationBox.query()
-                //        .between(JournalLocation_.mLat,
-                //                p0!!.position.latitude - 0.03,
-                //                p0.position.latitude + 0.03)
-                //        .between(JournalLocation_.mLng,
-                //                p0.position.longitude - 0.03,
-                //                p0.position.longitude + 0.03)
-                //        .build()
-                //        .find()
-                //if (found.isEmpty()) return
-                //journalLocation = found[0]
+                return
             }
         }
 
-
+        // Set up for Map
         mapFragment = supportFragmentManager.findFragmentById(R.id.activity_journal_map_panel) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
@@ -139,12 +136,15 @@ class JournalActivity : AppCompatActivity(),
         mAdapter = JournalLocationAdapter(this@JournalActivity, R.layout.activity_journal_list_view, journalLocationList)
         activity_journal_list_view_panel.adapter = mAdapter
 
-        activity_journal_list_view_panel.setOnItemClickListener { parent, view, position, id ->
-            onBackPressed()
+        activity_journal_list_view_panel.setOnItemClickListener { _, _, position, _ ->
+            if (mLayout.panelState == SlidingUpPanelLayout.PanelState.EXPANDED ||
+                    mLayout.panelState == SlidingUpPanelLayout.PanelState.ANCHORED) {
+                mLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
+            }
             moveMapCamera(LatLng(journalLocationList[position].mLat, journalLocationList[position].mLng))
         }
 
-        activity_journal_list_view_panel.setOnItemLongClickListener { parent, view, position, id ->
+        activity_journal_list_view_panel.setOnItemLongClickListener { _, _, position, _ ->
             Log.v("long click", "openEditDialog")
             openEditDialog(journalLocationList[position].id)
             true
@@ -165,39 +165,107 @@ class JournalActivity : AppCompatActivity(),
         mLayout.setFadeOnClickListener {
             mLayout.panelState = SlidingUpPanelLayout.PanelState.COLLAPSED
         }
-
         mLayout.anchorPoint = 0.6f
 
-
+        // Set up for Photo Picker
         activity_journal_fab.setOnClickListener {
             photoPickerWithPermissionCheck()
         }
+
+        // Set up for Swipe to Delete
+        creator = SwipeMenuCreator{
+            val deleteItem = SwipeMenuItem(applicationContext)
+            deleteItem.width = dp2px(90f)
+            deleteItem.icon = BitmapDrawable(
+                    resources,
+                    Bitmap.createScaledBitmap(
+                            (resources.getDrawable(R.drawable.ic_delete, applicationContext.theme) as BitmapDrawable).bitmap,
+                            120,
+                            120,
+                            false
+                    )
+            )
+            it.addMenuItem(deleteItem)
+            return@SwipeMenuCreator
+        }
+        activity_journal_list_view_panel.setMenuCreator(creator)
+
+        activity_journal_list_view_panel.setOnMenuItemClickListener { position, _, index ->
+            if(index == 0) {
+                deleteJournalLocation(position)
+            }
+            false
+        }
+        activity_journal_list_view_panel.setSwipeDirection(SwipeMenuListView.DIRECTION_LEFT)
     }
 
-    private fun updateCardPhoto() {
-        val builder = LatLngBounds.builder()
-        Log.v("journalLocationList", "$journalLocationList")
-        journalLocationList.forEach { builder.include(LatLng(it.mLat, it.mLng)) }
-        val bounds = builder.build()
+    private fun dp2px(dp: Float): Int {
+        return TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                resources.displayMetrics
+        ).toInt()
+    }
 
+    private fun deleteJournalLocation(position: Int) {
+        val journalLocation = mAdapter.getItem(position)
+        mAdapter.remove(journalLocation)
+        journalLocationBox.remove(journalLocation.id)
+        forceUpdateJournalLocation()
+        updateJournalPath()
+    }
+
+    fun updateCardPhoto(date: Boolean) {
+        val builder = LatLngBounds.builder()
+        var last = journalLocationList[0].mDate
+        var first = journalLocationList[0].mDate
+
+        var str = ""
+        journalLocationList.forEach {
+            boundCreate(LatLng(it.mLat, it.mLng)).forEach {
+                builder.include(it)
+            }
+            if (date) {
+                if (last < it.mDate) {
+                    last = it.mDate
+                }
+                if (first > it.mDate) {
+                    first = it.mDate
+                }
+                str = str + " " + it.mDate
+            }
+        }
+//        Log.v("updateCardPhoto", str)
+//        Log.v("updateCardPhoto", "$first, $last")
+
+        val bounds = builder.build()
         val journal = journalBox.get(mId).also {
+            Log.v("updateCardPhoto", "${it.mLat}, ${it.mLng}")
             it.mLat = bounds.center.latitude
             it.mLng = bounds.center.longitude
+        }
+        Log.v("updateCardPhoto", "${journal.mLat}, ${journal.mLng}")
+        if (date) {
+            if (first == last) {
+                journal.mDate = first
+            } else {
+                journal.mDate = "$first~$last"
+            }
         }
 
         journalBox.put(journal)
 
-        try {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        val callback = GoogleMap.SnapshotReadyCallback {
-            FileUtils.changeImage(File(journalBox.get(mId).mImageUri), it)
-        }
-        mMap.snapshot(callback)
+//        try {
+//            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//        }
+//        val callback = GoogleMap.SnapshotReadyCallback {
+//            FileUtils.changeImage(File(journalBox.get(mId).mImageUri), it)
+//            Toast.makeText(this, "photo update", Toast.LENGTH_LONG)
+//        }
+//        mMap.snapshot(callback)
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -206,7 +274,7 @@ class JournalActivity : AppCompatActivity(),
             try {
                 Matisse.obtainResult(data).forEach {
                     val filepath = getPathFromUri(it.toString())
-                    val exif = ExifInterface(filepath)
+                    val exif = ExifInterface(filepath!!)
                     val latLng = exifLatLng(exif)
                     val journalLocation = JournalLocation(
                             mLat = latLng[0],
@@ -215,13 +283,14 @@ class JournalActivity : AppCompatActivity(),
                             mName = "",
                             mText = "",
                             mDate = "")
+                    journalLocationBox.put(journalLocation)
                     val journal = journalBox.get(mId)
                     journal.mJournalLocations?.add(journalLocation)
-                    journalLocationBox.put(journalLocation)
                     journalBox.put(journal)
+                    Log.v("size", "size ${journalLocationQuery.find().size}")
                 }
                 updateJournalLocation()
-                updateCardPhoto()
+                updateCardPhoto(true)
                 updateJournalPath()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -276,11 +345,14 @@ class JournalActivity : AppCompatActivity(),
     }
 
     override fun onClusterClick(cluster: Cluster<JournalLocation>?): Boolean {
-        val firstName = cluster!!.items.iterator().next().mName
-        Toast.makeText(this, "${cluster.size} including $firstName", Toast.LENGTH_SHORT).show()
+//        val firstName = cluster!!.items.iterator().next().mName
 
         val builder = LatLngBounds.builder()
-        cluster.items.forEach { builder.include(it.position) }
+        cluster!!.items.forEach {
+            boundCreate(it.position).forEach {
+                builder.include(it)
+            }
+        }
 
         val bounds = builder.build()
 
@@ -293,6 +365,15 @@ class JournalActivity : AppCompatActivity(),
         return true
     }
 
+    private fun boundCreate(latLng: LatLng):Array<LatLng> {
+        return arrayOf(
+                LatLng(latLng.latitude-0.005, latLng.longitude-0.005),
+                LatLng(latLng.latitude-0.005, latLng.longitude+0.005),
+                LatLng(latLng.latitude+0.005, latLng.longitude-0.005),
+                LatLng(latLng.latitude+0.005, latLng.longitude+0.005)
+        )
+    }
+
     override fun onClusterInfoWindowClick(cluster: Cluster<JournalLocation>?) {
         return
     }
@@ -302,7 +383,7 @@ class JournalActivity : AppCompatActivity(),
     }
 
     override fun onClusterItemClick(p0: JournalLocation?): Boolean {
-        return false
+        return true
     }
 
     @NeedsPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -337,8 +418,7 @@ class JournalActivity : AppCompatActivity(),
         Toast.makeText(this, "never ask again", Toast.LENGTH_SHORT).show()
     }
 
-    fun updateJournalLocation() {
-        if (checkNoDifference()) return
+    private fun forceUpdateJournalLocation() {
         val journalLocations = journalBox.get(mId).mJournalLocations
         if (!journalLocationList.isEmpty()) {
             journalLocationList.clear()
@@ -351,12 +431,16 @@ class JournalActivity : AppCompatActivity(),
         mClusterManager.cluster()
     }
 
+    fun updateJournalLocation() {
+        if (checkNoDifference()) return
+        forceUpdateJournalLocation()
+    }
+
     private fun updateJournalPath() {
         Log.v("updateJournalPath", "executed")
         if (journalLocationList.size < 2) return
-        if (drawn) {
-            polylineOptionList.forEach { it.remove() }
-        }
+        polylineOptionList.forEach { it.remove() }
+
         //if (checkNoDifference()) return
         val size = journalLocationList.size
         val start = LatLng(journalLocationList[0].mLat, journalLocationList[0].mLng)
@@ -444,7 +528,12 @@ class JournalActivity : AppCompatActivity(),
             return false
         }
         for (i in 0 until journalLocationList.size) {
-            if (journalLocationList[i].id != journalLocations[i].id) {
+            if (journalLocationList[i].id != journalLocations[i].id ||
+                    journalLocationList[i].mName != journalLocations[i].mName ||
+                    journalLocationList[i].mText != journalLocations[i].mText ||
+                    journalLocationList[i].mDate != journalLocations[i].mDate ||
+                    journalLocationList[i].mLat != journalLocations[i].mLat ||
+                    journalLocationList[i].mLng != journalLocations[i].mLng    ) {
                 return false
             }
         }
@@ -549,11 +638,11 @@ class JournalActivity : AppCompatActivity(),
             options.inJustDecodeBounds = true
             BitmapFactory.decodeStream(FileInputStream(f), null, options)
 
-            val REQUIRED_SIZE = 320
+            val size = 320
             var scale = 2
 
-            while (options.outWidth / scale / 2 >= REQUIRED_SIZE &&
-                    options.outHeight / scale / 2 >= REQUIRED_SIZE) {
+            while (options.outWidth / scale / 2 >= size &&
+                    options.outHeight / scale / 2 >= size) {
                 scale *= 2
             }
 

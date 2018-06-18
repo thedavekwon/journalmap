@@ -45,7 +45,7 @@
     },
     {
       "id": "2:3302270600038584197",
-      "lastPropertyId": "8:4612017157339579049",
+      "lastPropertyId": "9:5619217694800792377",
       "name": "JournalLocation",
       "properties": [
         {
@@ -80,6 +80,10 @@
           "id": "8:4612017157339579049",
           "indexId": "1:5434215012786157181",
           "name": "journalId"
+        },
+        {
+          "id": "9:5619217694800792377",
+          "name": "mHtml"
         }
       ],
       "relations": []

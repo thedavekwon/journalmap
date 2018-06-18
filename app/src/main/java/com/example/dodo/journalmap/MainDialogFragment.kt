@@ -29,11 +29,13 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.ontbee.legacyforks.cn.pedant.SweetAlert.SweetAlertDialog
 import io.objectbox.Box
 import io.objectbox.BoxStore
 import io.objectbox.kotlin.boxFor
+import kotlinx.android.synthetic.main.activity_maps.*
 import permissions.dispatcher.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,7 +47,7 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var journalBox: Box<Journal>
-    private lateinit var mProgressBar: SweetAlertDialog
+    private lateinit var mMarker: Marker
 
     private var name = ""
     private var lat = 0.0
@@ -62,12 +64,6 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
         val queue = Volley.newRequestQueue(activity?.applicationContext)
         val titleText = rootView.findViewById<EditText>(R.id.fragment_main_dialog_city_title)
         val saveBtn = rootView.findViewById<Button>(R.id.fragment_main_dialog_city_save)
-
-        // Set up Progress Dialog
-        mProgressBar = SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
-        mProgressBar.progressHelper.barColor = Color.parseColor("#A5DC86")
-        mProgressBar.titleText = "Loading"
-        mProgressBar.setCancelable(true)
 
         // Set up DB
         journalBox = (activity?.application as App).boxStore.boxFor<Journal>()
@@ -86,6 +82,15 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
 
 
         saveBtn.setOnClickListener {
+            try {
+                mMarker.remove()
+            } catch (e: Exception) {
+                SweetAlertDialog(context, SweetAlertDialog.ERROR_TYPE)
+                        .setTitleText("Oops...")
+                        .setContentText("Select Specific Location to Progress")
+                        .show()
+                return@setOnClickListener
+            }
             // Snapshot the map
             val callback = GoogleMap.SnapshotReadyCallback {
                 title = titleText.text.toString()
@@ -137,8 +142,12 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
     private fun getLocationFromGoogle(loc: String): JsonObjectRequest {
 
         val preprocessedName = loc.replace(" ", "%20")
-        mProgressBar.show()
         val url = googleMapApiUrl + preprocessedName
+        val mProgressBar = SweetAlertDialog(context, SweetAlertDialog.PROGRESS_TYPE)
+        mProgressBar.progressHelper.barColor = Color.parseColor("#A5DC86")
+        mProgressBar.titleText = "Loading"
+        mProgressBar.setCancelable(true)
+        mProgressBar.show()
         return JsonObjectRequest(Request.Method.GET, url, null,
                 Response.Listener { response ->
                     try {
@@ -152,17 +161,17 @@ class MainDialogFragment : DialogFragment(), OnMapReadyCallback {
                         lat = jsonObject.getDouble("lat")
                         lng = jsonObject.getDouble("lng")
                         val curLoc = LatLng(lat, lng)
-                        mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 9.0f))
+                        mMarker = mMap.addMarker(MarkerOptions().position(curLoc).title("Marker in $name"))
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curLoc, 8.0f))
                         Log.v("map", "$lat, $lng")
                         mProgressBar.dismissWithAnimation()
                     } catch (e: Exception) {
-                        Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+                        Toast.makeText(activity?.applicationContext, "1", Toast.LENGTH_LONG).show()
                         mProgressBar.dismissWithAnimation()
                     }
                 },
                 Response.ErrorListener {
-                    Toast.makeText(activity?.applicationContext, "Not Found Try Again", Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity?.applicationContext, "2", Toast.LENGTH_LONG).show()
                     mProgressBar.dismissWithAnimation()
                 }
         )

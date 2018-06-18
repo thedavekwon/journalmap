@@ -3,4 +3,9 @@
     <dimen name="grid_expected_size">120dp</dimen>
     <dimen name="custom_profile_image">60dp</dimen>
     <dimen name="custom_profile_padding">5dp</dimen>
+
+    <dimen name="bullet_radius">2dp</dimen>
+    <dimen name="bullet_gap_width">8dp</dimen>
+    <dimen name="quote_stripe_width">8dp</dimen>
+    <dimen name="quote_gap_width">2dp</dimen>
 </resources>
