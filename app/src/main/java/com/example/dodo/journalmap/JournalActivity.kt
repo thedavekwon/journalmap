@@ -453,7 +453,7 @@ class JournalActivity : AppCompatActivity(),
         Log.v("updateJournalPath", "$start, $locList, $last")
 
         if (locList.isEmpty()) {
-            GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
+            GoogleDirection.withServerKey("key")
                     .from(start)
                     .to(last)
                     .transportMode(TransportMode.WALKING)
@@ -485,7 +485,7 @@ class JournalActivity : AppCompatActivity(),
                         }
                     })
         } else {
-            GoogleDirection.withServerKey("AIzaSyB042ESM7syHb52l9pFH-0RO8RIMd2E9eU")
+            GoogleDirection.withServerKey("key")
                     .from(start)
                     .and(locList)
                     .to(last)
